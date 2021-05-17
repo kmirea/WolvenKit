@@ -80,6 +80,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>false</LinkIncremental>
     <PostBuildEventUseInBuild>false</PostBuildEventUseInBuild>
+    <IncludePath>c:\Users\Hajni\Downloads\asd\vcpkg\packages\lz4_x64-windows-static\include\;c:\Users\Hajni\Downloads\asd\vcpkg\packages\zlib_x64-windows-static\include\;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -129,7 +130,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)engine;$(ProjectDir)third_party;$(ProjectDir);$(ProjectDir)\third_party\libdeflate;$(ProjectDir)\third_party\fbx;D:\VulkanSDK\1.2.170.0\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)engine;$(ProjectDir)third_party;$(ProjectDir);$(ProjectDir)\third_party\libdeflate;$(ProjectDir)\third_party\fbx;C:\VulkanSDK\1.2.176.1\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <FloatingPointModel>Fast</FloatingPointModel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
@@ -138,7 +139,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
       <AdditionalLibraryDirectories>$(ProjectDir)lib\debug;$(ProjectDir)lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vulkan-1.lib;libfbxsdk.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>C:\VulkanSDK\1.2.176.1\lib\vulkan-1.lib;C:\Program Files\Autodesk\FBX\FBX SDK\2020.2\lib\vs2019\x64\debug\libfbxsdk.lib;c:\Users\Hajni\Downloads\asd\vcpkg\packages\zlib_x64-windows-static\lib\zlib.lib;c:\Users\Hajni\Downloads\asd\vcpkg\packages\lz4_x64-windows-static\lib\lz4.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(SolutionDir)runtime4\$(TargetName)$(TargetExt)</OutputFile>
     </Link>
     <PostBuildEvent>
@@ -167,7 +168,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)engine;$(ProjectDir)third_party;$(ProjectDir);$(ProjectDir)\third_party\libdeflate;$(ProjectDir)\third_party\fbx;D:\VulkanSDK\1.2.170.0\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)engine;$(ProjectDir)third_party;$(ProjectDir);$(ProjectDir)\third_party\libdeflate;$(ProjectDir)\third_party\fbx;C:\VulkanSDK\1.2.176.1\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <FloatingPointModel>Fast</FloatingPointModel>
@@ -186,7 +187,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
       <AdditionalLibraryDirectories>$(ProjectDir)lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vulkan-1.lib;libfbxsdk.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>C:\VulkanSDK\1.2.176.1\lib\vulkan-1.lib;C:\Program Files\Autodesk\FBX\FBX SDK\2020.2\lib\vs2019\x64\release\libfbxsdk.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(SolutionDir)runtime4\$(TargetName)$(TargetExt)</OutputFile>
       <Profile>true</Profile>
     </Link>
@@ -227,6 +228,9 @@
     <ClInclude Include="engine\VulkanBuffer.h" />
     <ClInclude Include="engine\VulkanTools.h" />
     <ClInclude Include="framework.h" />
+    <ClInclude Include="third_party\CP77ArchiveDump\ArchiveDump.hpp" />
+    <ClInclude Include="third_party\CP77ArchiveDump\CR2W.hpp" />
+    <ClInclude Include="third_party\CP77ArchiveDump\RADR.hpp" />
     <ClInclude Include="third_party\cr2w\bundle.h" />
     <ClInclude Include="third_party\cr2w\bundledictionary.h" />
     <ClInclude Include="third_party\cr2w\bundlemanager.h" />
@@ -354,6 +358,7 @@
     <ClCompile Include="engine\VulkanBuffer.cpp" />
     <ClCompile Include="engine\VulkanTools.cpp" />
     <ClCompile Include="engine\WKapi.cpp" />
+    <ClCompile Include="third_party\CP77ArchiveDump\ArchiveDump.cpp" />
     <ClCompile Include="third_party\cr2w\bundle.cpp" />
     <ClCompile Include="third_party\cr2w\bundledictionary.cpp" />
     <ClCompile Include="third_party\cr2w\bundlemanager.cpp" />

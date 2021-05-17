@@ -15,6 +15,14 @@ void SetWitcherExePath(const char* exePath)
     WolvenEngine::SetWitcherExePath(exePath);
 }
 
+void SetCP77ExePath(const char* exePath)
+{
+#ifdef _DEBUG
+    std::cout << "CP77 exe located at: " << exePath << "\n";
+#endif
+    WolvenEngine::SetCP77ExePath(exePath);
+}
+
 void AddResourcePath(const char* resourcePath)
 {
 #ifdef _DEBUG

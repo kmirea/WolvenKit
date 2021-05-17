@@ -49,6 +49,9 @@ namespace WolvenEngine
         case 5:
             compressionType = File::Compression::LZ4;
             break;
+        case 6:
+            compressionType = File::Compression::OODLE;
+            break;
         default:
             break;
         }

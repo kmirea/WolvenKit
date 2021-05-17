@@ -26,7 +26,6 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#pragma warning(disable:4146)
 
 #include "deflate_compress.h"
 #include "deflate_constants.h"
@@ -1711,7 +1710,7 @@ deflate_flush_block(struct libdeflate_compressor * restrict c,
 	u32 dynamic_cost = 0;
 	u32 static_cost = 0;
 	u32 uncompressed_cost = 0;
-	struct deflate_codes *codes = 0;
+	struct deflate_codes *codes = NULL;
 	int block_type;
 	unsigned sym;
 

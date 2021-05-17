@@ -52,6 +52,9 @@
     <Filter Include="Source Files\fbx">
       <UniqueIdentifier>{e8b518ff-3221-4793-bdbe-4ba976f5d3e0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\CP77ArchiveDump">
+      <UniqueIdentifier>{66bcb02e-e02f-4c60-9159-d9e5dfb0f1af}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -342,6 +345,15 @@
     <ClInclude Include="engine\threadpool.hpp">
       <Filter>Source Files\engine</Filter>
     </ClInclude>
+    <ClInclude Include="third_party\CP77ArchiveDump\CR2W.hpp">
+      <Filter>Source Files\CP77ArchiveDump</Filter>
+    </ClInclude>
+    <ClInclude Include="third_party\CP77ArchiveDump\RADR.hpp">
+      <Filter>Source Files\CP77ArchiveDump</Filter>
+    </ClInclude>
+    <ClInclude Include="third_party\CP77ArchiveDump\ArchiveDump.hpp">
+      <Filter>Source Files\CP77ArchiveDump</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -544,6 +556,9 @@
     </ClCompile>
     <ClCompile Include="engine\vk_uioverlay.cpp">
       <Filter>Source Files\engine</Filter>
+    </ClCompile>
+    <ClCompile Include="third_party\CP77ArchiveDump\ArchiveDump.cpp">
+      <Filter>Source Files\CP77ArchiveDump</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

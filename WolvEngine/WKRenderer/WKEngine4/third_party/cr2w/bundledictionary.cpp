@@ -2,20 +2,30 @@
 #include "file.h"
 #include <iostream>
 #include <filesystem>
+#include <CP77ArchiveDump/RADR.hpp>
+#include <CP77ArchiveDump/ArchiveDump.hpp>
 
 namespace WolvenEngine
 {
-    typedef std::unordered_map<std::string, std::string> LookupDictionary;
-
     constexpr uint32_t HASH_SIZE = 16;
     BundleDictionary RawPathHashes;
     LookupDictionary Lookup;
     std::vector<std::string> BundleNames;
     std::string Witcher3ExePath;
 
+    BundleDictionary CP77RawPathHashes;
+    LookupDictionary CP77Lookup;
+    std::vector<std::string> CP77BundleNames;
+    std::string CP77ExePath;
+
     void SetWitcherExePath(const char* exePath)
     {
         Witcher3ExePath = exePath;
+    }
+
+    void SetCP77ExePath(const char* exePath)
+    {
+        CP77ExePath = exePath;
     }
 
 #ifdef _DEBUG
@@ -182,6 +192,86 @@ namespace WolvenEngine
         return true;
     }
 
+    bool CreateTableOfContentsFromBundlesCP77()
+    {
+        if (!std::filesystem::exists(CP77ExePath))
+            return false;
+
+        if (std::filesystem::exists("rawcp77pathhashes.bin"))
+        {
+            std::filesystem::remove("rawcp77pathhashes.bin");
+        }
+
+        std::filesystem::path exePath = CP77ExePath;
+        exePath = exePath.parent_path().parent_path();
+        std::filesystem::path content = exePath;
+        content.append("archive\\pc\\content");
+
+        std::vector<std::string> archiveNames;
+
+        OodleHelper::Initialize();
+
+        for (const auto& fp : std::filesystem::directory_iterator(content))
+        {
+            const std::filesystem::path& fpath = fp.path();
+            if (fpath.extension() != ".archive")
+                continue;
+
+            auto index = (uint32_t)archiveNames.size();
+
+            auto rpath = std::filesystem::proximate(fpath, exePath);
+            archiveNames.push_back(rpath.string());
+#ifdef _DEBUG
+            std::cout << rpath.string() << " added at index " << index << std::endl;
+#endif
+
+            auto r = extract_radr_archive(fpath, CP77BundleNames, CP77RawPathHashes, CP77Lookup);
+        }
+
+        // dump
+        FILE* fp = nullptr;
+        fopen_s(&fp, "rawcp77pathhashes.bin", "wb");
+        if (fp != nullptr)
+        {
+            uint32_t nLookupEntries = (uint32_t)CP77Lookup.size();
+            fwrite(&nLookupEntries, sizeof(uint32_t), 1, fp);
+
+            const uint8_t zero = 0;
+
+            for (auto& it : Lookup)
+            {
+                size_t sz = it.first.length();
+                fwrite(it.first.c_str(), sz, 1, fp);
+                fwrite(&zero, sizeof(uint8_t), 1, fp);
+                fwrite(it.second.c_str(), HASH_SIZE, 1, fp);
+            }
+
+            uint32_t nBundleFolders = (uint32_t)CP77BundleNames.size();
+            fwrite(&nBundleFolders, sizeof(uint32_t), 1, fp);
+
+            for (auto& it : CP77BundleNames)
+            {
+                size_t sz = it.length();
+                fwrite(it.c_str(), sz, 1, fp);
+                fwrite(&zero, sizeof(uint8_t), 1, fp);
+            }
+
+            uint32_t nElements = (uint32_t)CP77RawPathHashes.size();
+            fwrite(&nElements, sizeof(uint32_t), 1, fp);
+
+            for (auto& it : CP77RawPathHashes)
+            {
+                fwrite(it.first.c_str(), HASH_SIZE, 1, fp);
+                fwrite(&(it.second.offset), sizeof(uint32_t), 1, fp);
+                fwrite(&(it.second.uncompressedSize), sizeof(uint32_t), 1, fp);
+                fwrite(&(it.second.compressedSize), sizeof(uint32_t), 1, fp);
+                fwrite(&(it.second.index), sizeof(uint16_t), 1, fp);
+                fwrite(&(it.second.compression), sizeof(uint16_t), 1, fp);
+            }
+            fclose(fp);
+        }
+    }
+
     bool CreateTableOfContentsFromBundles()
     {
         if (!std::filesystem::exists(Witcher3ExePath))
@@ -204,7 +294,7 @@ namespace WolvenEngine
         // get all content directories
 
         // dlc takes next priority
-        for (const auto& entry : std::filesystem::directory_iterator(dlc))
+        /*for (const auto& entry : std::filesystem::directory_iterator(dlc))
         {
             if (entry.is_directory())
             {
@@ -231,7 +321,7 @@ namespace WolvenEngine
                     }
                 }
             }
-        }
+        }*/
 
         // then the regular content directories
         for (const auto& entry : std::filesystem::directory_iterator(content))
@@ -257,7 +347,7 @@ namespace WolvenEngine
                             (bundleEntry.path().string().ends_with("startup.bundle")) ||
                             (bundleEntry.path().string().ends_with("runtime.bundle")) ||
                             (bundleEntry.path().string().ends_with("patch.bundle")))
-                        {                            
+                        {
                             uint32_t index = (uint32_t)bundleNames.size();
 
                             std::filesystem::path rpath = std::filesystem::proximate(bundleEntry, exePath);

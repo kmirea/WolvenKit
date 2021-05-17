@@ -1,4 +1,4 @@
-﻿#define _USE_MATH_DEFINES
+#define _USE_MATH_DEFINES
 #include <cmath>
 
 #include "vk_engine.h"
@@ -1939,7 +1939,8 @@ void VulkanEngine::init_scene(const std::string& asset)
 
 #ifdef _DEBUG
 		//WolvenEngine::CreateBinFromCSV("pathhashes.csv");
-		//WolvenEngine::CreateTableOfContentsFromBundles();
+        //WolvenEngine::CreateTableOfContentsFromBundles();
+        WolvenEngine::CreateTableOfContentsFromBundlesCP77();
 #endif
 
 		WolvenEngine::LoadPathHashes("pathhashes.bin");

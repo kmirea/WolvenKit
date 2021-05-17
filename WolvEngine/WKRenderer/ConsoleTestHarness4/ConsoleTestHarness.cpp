@@ -9,7 +9,8 @@
 int main()
 {    
 #ifdef USE_GAME_BUNDLES
-    SetWitcherExePath("D:\\SteamLibrary\\steamapps\\common\\The Witcher 3\\bin\\x64");
+    SetWitcherExePath("D:\\Games\\Steam\\steamapps\\common\\The Witcher 3\\bin\\x64");
+    SetCP77ExePath("D:\\Games\\Steam\\steamapps\\common\\Cyberpunk 2077\\bin\\x64");
     if (LoadAsset("levels\\island_of_mist\\island_of_mist.w2w"))
     //if(ImportAsset("D:\\TW3\\bodytest5.fbx"))
     //if (ImportAsset("D:\\TW3\\car\\Shelby.fbx"))

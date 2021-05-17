@@ -298,7 +298,7 @@ namespace WolvenEngine
                     while (!(_frac & 0x200)) { _frac <<= 1; f.exp--; }
                     f.frac = (_frac & 0x1FF) << 14;
                 }
-                else { f.frac = 0; f.exp = 0; } // ± 0 -> ± 0
+                else { f.frac = 0; f.exp = 0; } // Â± 0 -> Â± 0
                 break;
             case 31: // infinity or NaNs : frac ? NaN : (-1)^sign * infinity
                 f.exp = 255;

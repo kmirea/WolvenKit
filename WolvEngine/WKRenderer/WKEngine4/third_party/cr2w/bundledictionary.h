@@ -15,7 +15,9 @@ namespace WolvenEngine
     };
 
     void SetWitcherExePath(const char* exePath);
+    void SetCP77ExePath(const char* exePath);
 
+    typedef std::unordered_map<std::string, std::string> LookupDictionary;
     typedef std::unordered_map<std::string, BundleEntry> BundleDictionary;
     extern BundleDictionary RawPathHashes;
     bool LoadRawPathHashes(const std::string& path);
@@ -23,5 +25,6 @@ namespace WolvenEngine
     std::string GetBundlePath(uint32_t index);
 #ifdef _DEBUG
     bool CreateTableOfContentsFromBundles();
+    bool CreateTableOfContentsFromBundlesCP77();
 #endif
 }

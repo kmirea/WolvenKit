@@ -12,6 +12,7 @@
 extern "C"
 {
     WKENGINE_API void SetWitcherExePath(const char* exePath);
+    WKENGINE_API void SetCP77ExePath(const char* exePath);
     WKENGINE_API void AddResourcePath(const char* resourcePath);
     WKENGINE_API bool LoadAsset(const char* assetPath);
     WKENGINE_API bool ImportAsset(const char* assetPath);

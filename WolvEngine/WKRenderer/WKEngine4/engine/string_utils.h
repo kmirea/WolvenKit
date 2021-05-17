@@ -1,4 +1,4 @@
-﻿#include <string>
+#include <string>
 #include <string_view>
 #include <cstdint>
 
@@ -9,6 +9,16 @@ namespace StringUtils {
 	{
 		return ((count ? fnv1a_32(s, count - 1) : 2166136261u) ^ s[count]) * 16777619u;
 	}
+
+    // FNV-1a 64bit hashing algorithm.
+    constexpr uint64_t fnv1a_64(char const* s, std::size_t count)
+    {
+        auto hash = 0xCBF29CE484222325ul;
+        for (auto i = 0; i < count; i++) {
+            hash = (hash ^ s[i]) * 0x00000100000001B3ul;
+        }
+        return hash;
+    }
 
 	constexpr size_t const_strlen(const char* s)
 	{

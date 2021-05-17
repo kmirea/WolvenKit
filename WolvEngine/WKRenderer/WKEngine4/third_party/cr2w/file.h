@@ -35,7 +35,8 @@ namespace WolvenEngine
             ZLIB,
             SNAPPY,
             DOBOZ,
-            LZ4
+            LZ4,
+            OODLE = 6
         };
 
         bool open(const char* filename, const char* mode);

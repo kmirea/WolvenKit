@@ -43,6 +43,7 @@ typedef s16 mf_pos_t;
  * 'data' must be aligned to a MATCHFINDER_MEM_ALIGNMENT boundary, and
  * 'size' must be a multiple of MATCHFINDER_SIZE_ALIGNMENT.
  */
+#pragma warning(disable:4146)
 #ifndef matchfinder_init
 static forceinline void
 matchfinder_init(mf_pos_t *data, size_t size)
