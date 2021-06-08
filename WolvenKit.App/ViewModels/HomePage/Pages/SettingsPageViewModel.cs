@@ -218,10 +218,26 @@ namespace WolvenKit.ViewModels.HomePage.Pages
         }
 
         [Display(Name = "Modkit Path")]
-        public string Modkit_Path { get; set; }
+        public string Modkit_Path
+        {
+            get => _settingsManager.W3GameModDir;
+            set
+            {
+                _settingsManager.W3GameModDir = value;
+                _settingsManager.Save();
+            }
+        }
 
         [Display(Name = "Uncooked Depot Path")]
-        public string Uncooked_Depot_Path { get; set; }
+        public string Uncooked_Depot_Path
+        {
+            get => _settingsManager.DepotPath;
+            set
+            {
+                _settingsManager.DepotPath = value;
+                _settingsManager.Save();
+            }
+        }
 
     }
 
@@ -292,7 +308,15 @@ namespace WolvenKit.ViewModels.HomePage.Pages
         public bool AutoInstallMods { get; set; }
         [Category("Mods")]
         [Display(Name = "Material depot path.")]
-        public string MaterialDepotPath { get; set; }
+        public string MaterialDepotPath
+        {
+            get => _settingsManager.MaterialRepositoryPath;
+            set
+            {
+                _settingsManager.MaterialRepositoryPath = value;
+                _settingsManager.Save();
+            }
+        }
 
         [Category("Theme")]
         [Display(Name = "Application theme accent.")]

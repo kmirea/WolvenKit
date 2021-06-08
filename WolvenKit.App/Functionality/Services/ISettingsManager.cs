@@ -31,7 +31,7 @@ namespace WolvenKit.Functionality.Services
         string MaterialRepositoryPath { get; set; }
         string W3GameContentDir { get; }
         string W3GameDlcDir { get; }
-        string W3GameModDir { get; }
+        string W3GameModDir { get; set; }
         string W3GameRootDir { get; }
 
         #endregion Properties
