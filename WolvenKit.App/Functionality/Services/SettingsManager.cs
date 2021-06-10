@@ -63,6 +63,8 @@ namespace WolvenKit.Functionality.Services
 
         public bool ShowGuidedTour { get; set; } = true;
 
+        public bool AutoInstallMods { get; set; } = true;
+
         public bool CheckForUpdates { get; set; }
 
         public string CP77ExecutablePath
@@ -85,13 +87,13 @@ namespace WolvenKit.Functionality.Services
             }
         }
 
-        public string MaterialRepositoryPath
+        public string MaterialDepotPath
         {
             get => _materialRepositoryPath;
             set
             {
                 _materialRepositoryPath = value;
-                RaisePropertyChanged(nameof(MaterialRepositoryPath));
+                RaisePropertyChanged(nameof(MaterialDepotPath));
             }
         }
 

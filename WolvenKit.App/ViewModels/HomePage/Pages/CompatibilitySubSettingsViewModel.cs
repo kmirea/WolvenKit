@@ -35,7 +35,7 @@ namespace WolvenKit.ViewModels.HomePage.Pages
         [Expose("CP77ExecutablePath")]
         [Expose("WccLitePath")]
         [Expose("DepotPath")]
-        [Expose("MaterialRepositoryPath")]
+        [Expose("MaterialDepotPath")]
         private ISettingsManager SettingsManager
         {
             get => GetValue<ISettingsManager>(SettingsManagerProperty);

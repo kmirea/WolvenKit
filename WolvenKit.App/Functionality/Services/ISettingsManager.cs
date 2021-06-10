@@ -6,6 +6,8 @@ namespace WolvenKit.Functionality.Services
     {
         #region Properties
 
+        bool AutoInstallMods { get; set; }
+
         bool CheckForUpdates { get; set; }
 
         string CP77ExecutablePath { get; set; }
@@ -28,10 +30,10 @@ namespace WolvenKit.Functionality.Services
         /*public*/
         string WccLitePath { get; set; }
 
-        string MaterialRepositoryPath { get; set; }
+        string MaterialDepotPath { get; set; }
         string W3GameContentDir { get; }
         string W3GameDlcDir { get; }
-        string W3GameModDir { get; set; }
+        string W3GameModDir { get; }
         string W3GameRootDir { get; }
 
         #endregion Properties

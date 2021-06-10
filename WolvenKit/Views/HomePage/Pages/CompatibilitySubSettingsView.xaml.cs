@@ -59,7 +59,7 @@ namespace WolvenKit.Views.HomePage.Pages
             );
             if (result.Result)
             {
-                _settingsManager.MaterialRepositoryPath = result.DirectoryName;
+                _settingsManager.MaterialDepotPath = result.DirectoryName;
             }
         }
 
@@ -87,7 +87,7 @@ namespace WolvenKit.Views.HomePage.Pages
 
             if (materialReppathTxtbx.VerifyData())
             {
-                _settingsManager.MaterialRepositoryPath = materialReppathTxtbx.Text;
+                _settingsManager.MaterialDepotPath = materialReppathTxtbx.Text;
             }
 
             _settingsManager.Save();

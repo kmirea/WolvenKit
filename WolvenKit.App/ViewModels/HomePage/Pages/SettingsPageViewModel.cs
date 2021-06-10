@@ -184,7 +184,7 @@ namespace WolvenKit.ViewModels.HomePage.Pages
 
         [Category("General")]
         [Display(Name = "Game executable path (.exe)")]
-        public string Game_Executable_Path
+        public string GameExecutablePath
         {
             get => _settingsManager.CP77ExecutablePath;
             set
@@ -207,7 +207,7 @@ namespace WolvenKit.ViewModels.HomePage.Pages
 
         [Category("General")]
         [Display(Name = "Game executable path (.exe)")]
-        public string Game_Executable_Path
+        public string GameExecutablePath
         {
             get => _settingsManager.W3ExecutablePath;
             set
@@ -218,18 +218,18 @@ namespace WolvenKit.ViewModels.HomePage.Pages
         }
 
         [Display(Name = "Modkit Path")]
-        public string Modkit_Path
+        public string ModkitPath
         {
-            get => _settingsManager.W3GameModDir;
+            get => _settingsManager.WccLitePath;
             set
             {
-                _settingsManager.W3GameModDir = value;
+                _settingsManager.WccLitePath = value;
                 _settingsManager.Save();
             }
         }
 
         [Display(Name = "Uncooked Depot Path")]
-        public string Uncooked_Depot_Path
+        public string UncookedDepotPath
         {
             get => _settingsManager.DepotPath;
             set
@@ -299,21 +299,37 @@ namespace WolvenKit.ViewModels.HomePage.Pages
         //public bool Desktop_Notifications { get; set; }  // Doesn't work yet I think?
         [Category("Updates")]
         [Display(Name = "Receive Auto updates?")]
-        public bool ReceiveAutoUpdates { get; set; }
+        public bool ReceiveAutoUpdates
+        {
+            get => _settingsManager.CheckForUpdates;
+            set
+            {
+                _settingsManager.CheckForUpdates = value;
+                _settingsManager.Save();
+            }
+        }
         [Category("Updates")]
         [Display(Name = "Set auto update channel.")]
         public AutoUpdateChannel UpdateChannel { get; set; }
         [Category("Mods")]
         [Display(Name = "Automatically install mods.")]
-        public bool AutoInstallMods { get; set; }
+        public bool AutoInstallMods
+        {
+            get => _settingsManager.AutoInstallMods;
+            set
+            {
+                _settingsManager.AutoInstallMods = value;
+                _settingsManager.Save();
+            }
+        }
         [Category("Mods")]
         [Display(Name = "Material depot path.")]
         public string MaterialDepotPath
         {
-            get => _settingsManager.MaterialRepositoryPath;
+            get => _settingsManager.MaterialDepotPath;
             set
             {
-                _settingsManager.MaterialRepositoryPath = value;
+                _settingsManager.MaterialDepotPath = value;
                 _settingsManager.Save();
             }
         }

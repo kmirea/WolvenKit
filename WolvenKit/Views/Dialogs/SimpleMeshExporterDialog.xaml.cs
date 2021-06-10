@@ -413,7 +413,7 @@ namespace WolvenKit.Views.Dialogs
 
         private DirectoryInfo ReturnThisForMe()
         {
-            var mrp = ServiceLocator.Default.ResolveType<ISettingsManager>().MaterialRepositoryPath;
+            var mrp = ServiceLocator.Default.ResolveType<ISettingsManager>().MaterialDepotPath;
 
             if (String.IsNullOrEmpty(mrp))
             {

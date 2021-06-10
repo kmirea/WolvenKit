@@ -14,16 +14,16 @@ namespace WolvenKit.Views.Dialogs
         public MaterialsRepositoryDialog()
         {
             InitializeComponent();
-            if (ServiceLocator.Default.ResolveType<ISettingsManager>().MaterialRepositoryPath != "")
+            if (ServiceLocator.Default.ResolveType<ISettingsManager>().MaterialDepotPath != "")
             {
-                archivestext.Text = ServiceLocator.Default.ResolveType<ISettingsManager>().MaterialRepositoryPath;
+                archivestext.Text = ServiceLocator.Default.ResolveType<ISettingsManager>().MaterialDepotPath;
 
             }
         }
 
         private void Button_Click(object sender, System.Windows.RoutedEventArgs e)
         {
-            ServiceLocator.Default.ResolveType<ISettingsManager>().MaterialRepositoryPath = archivestext.Text;
+            ServiceLocator.Default.ResolveType<ISettingsManager>().MaterialDepotPath = archivestext.Text;
             var modTools = ServiceLocator.Default.ResolveType<ModTools>();
             modTools.GenerateMaterialRepo(new System.IO.DirectoryInfo(archivestext.Text), new System.IO.DirectoryInfo(Materialsrepotext.Text), Common.DDS.EUncookExtension.dds);
         }
