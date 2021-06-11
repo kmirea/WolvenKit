@@ -56,7 +56,7 @@ namespace WolvenKit.Functionality.Controllers
 
         #region Methods
 
-        public Task HandleStartup()
+        public async Task HandleStartup()
         {
             var dir = Path.GetDirectoryName(AppDomain.CurrentDomain.BaseDirectory);
             var destFileName = Path.Combine(dir, "oo2ext_7_win64.dll");
@@ -65,12 +65,12 @@ namespace WolvenKit.Functionality.Controllers
                 throw new MissingCompressionException($"oo2ext_7_win64.dll not found in {dir}");
             }
 
-            var todo = new List<Func<IGameArchiveManager>>()
+            /*var todo = new List<Func<IGameArchiveManager>>()
             {
                 LoadArchiveManager,
-            };
-            Parallel.ForEach(todo, _ => Task.Run(_));
-            return Task.CompletedTask;
+            };*/
+            await Task.Run(() => LoadArchiveManager());
+            //return Task.CompletedTask;
         }
 
         public List<IGameArchiveManager> GetArchiveManagersManagers(bool loadmods) =>

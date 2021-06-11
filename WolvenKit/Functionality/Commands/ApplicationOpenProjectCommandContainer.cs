@@ -152,6 +152,10 @@ namespace WolvenKit.Functionality.Commands
                                     _notificationService.Success("Project " +
                                                                  Path.GetFileNameWithoutExtension(location) +
                                                                  " loaded!");
+                                    Views.Shell.DockingAdapter.G_Dock.Dispatcher.Invoke(() =>
+                                    {
+                                        Views.Shell.DockingAdapter.G_Dock.SetLayoutToDefault();
+                                    });
 
                                 },
                                 TaskContinuationOptions.OnlyOnRanToCompletion);
