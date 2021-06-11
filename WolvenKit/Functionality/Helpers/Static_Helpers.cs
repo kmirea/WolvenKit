@@ -1,6 +1,5 @@
 using Catel.Logging;
 using Octokit;
-using Orchestra.Views;
 using WolvenKit.ViewModels.Shell;
 using WolvenKit.Views.Editor;
 using WolvenKit.Views.Shell;
@@ -10,7 +9,6 @@ namespace WolvenKit.Functionality.Helpers
     public static class StaticReferences
     {
         public static PropertiesView GlobalPropertiesView;
-        public static ShellWindow GlobalShell;
         public static StatusBarViewModel GlobalStatusBar;
         public static MainView MainView;
         public static RibbonView RibbonViewInstance;

@@ -15,7 +15,6 @@ using Catel.Services;
 using Feather.Commands;
 using Feather.Controls;
 using HandyControl.Data;
-using Orchestra.Services;
 using WolvenKit.Common;
 using WolvenKit.Common.Model;
 using WolvenKit.Common.Services;

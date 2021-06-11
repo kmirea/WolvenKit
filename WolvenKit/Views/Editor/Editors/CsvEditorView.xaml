@@ -41,12 +41,7 @@
 
         <Grid Margin="0,150,0,0">
 
-            <orccsvtexteditor:CsvTextEditorControl
-             EditorInstanceType="{Binding EditorInstanceType}"
-             Foreground="White"
-                
-             Text="one,two,three,four,five" Height="155"
-             />
+            
         </Grid>
     </Grid>
 </catel:UserControl>

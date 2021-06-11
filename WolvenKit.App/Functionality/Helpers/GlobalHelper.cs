@@ -1,4 +1,3 @@
-using Orchestra.Views;
 using WolvenKit.ViewModels.Shell;
 
 namespace WolvenKit.Functionality.WKitGlobal.Helpers
@@ -7,7 +6,6 @@ namespace WolvenKit.Functionality.WKitGlobal.Helpers
     {
         #region Fields
 
-        public static ShellWindow GlobalShell;
         public static StatusBarViewModel GlobalStatusBar;
 
         #endregion Fields

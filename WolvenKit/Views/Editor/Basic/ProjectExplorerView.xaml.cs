@@ -6,7 +6,7 @@ using System.Windows;
 using System.Windows.Media.Imaging;
 using Catel.IoC;
 using CP77.CR2W;
-using Microsoft.WindowsAPICodePack.Dialogs;
+//using Microsoft.WindowsAPICodePack.Dialogs;
 using Syncfusion.UI.Xaml.Grid;
 using Syncfusion.UI.Xaml.TreeGrid;
 using WolvenKit.Common;

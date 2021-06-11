@@ -9,9 +9,6 @@ using Catel.MVVM;
 using FFmpeg.AutoGen;
 using Microsoft.Web.WebView2.Core;
 using Octokit;
-using Orc.Squirrel;
-using Orchestra.Services;
-using Orchestra.Views;
 using Syncfusion.SfSkinManager;
 using Syncfusion.Themes.MaterialDark.WPF;
 using Unosquare.FFME;
@@ -131,14 +128,13 @@ namespace WolvenKit.Functionality.Initialization
         }
 
         // Initialize MVVM (Catel)
-        public static async Task InitializeMVVM()
+        public static void InitializeMVVM()
         {
 
             try
             {
                 var uri = new Uri("pack://application:,,,/WolvenKit.Resources;component/Resources/Media/Images/git.png");
 
-                await SquirrelHelper.HandleSquirrelAutomaticallyAsync();
 
                 // Register Viewmodels & Views
                 var viewModelLocator = ServiceLocator.Default.ResolveType<IViewModelLocator>();
@@ -243,39 +239,40 @@ namespace WolvenKit.Functionality.Initialization
 
         }
 
-        private static async Task ShellInnerInit()
+        private static Task ShellInnerInit()
         {
-            try
-            {
-                HandyControl.Tools.ConfigHelper.Instance.SetLang("en");
-                var shellService = ServiceLocator.Default.ResolveType<IShellService>();
+            //try
+            //{
+            //    HandyControl.Tools.ConfigHelper.Instance.SetLang("en");
+            //    var shellService = ServiceLocator.Default.ResolveType<IShellService>();
 
-                await shellService.CreateAsync<ShellWindow>();
-                var sh = (ShellWindow)shellService.Shell;
-                StaticReferences.GlobalShell = sh;
-                sh.MinWidth = 1;
-                sh.MinHeight = 1;
-                sh.WindowState = WindowState.Maximized;
-                sh.WindowStartupLocation = WindowStartupLocation.CenterScreen;
-                var ws = new Binding
-                {
-                    Source = HomePageViewModel.GlobalHomePageVM,
-                    Path = new PropertyPath("CurrentWindowState"),
-                    Mode = BindingMode.TwoWay,
-                    UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged
-                };
-                BindingOperations.SetBinding(sh, ShellWindow.WindowStateProperty, ws);
-                sh.Closed += Sh_Closed;
+            //    await shellService.CreateAsync<ShellWindow>();
+            //    var sh = (ShellWindow)shellService.Shell;
+            //    StaticReferences.GlobalShell = sh;
+            //    sh.MinWidth = 1;
+            //    sh.MinHeight = 1;
+            //    sh.WindowState = WindowState.Maximized;
+            //    sh.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+            //    var ws = new Binding
+            //    {
+            //        Source = HomePageViewModel.GlobalHomePageVM,
+            //        Path = new PropertyPath("CurrentWindowState"),
+            //        Mode = BindingMode.TwoWay,
+            //        UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged
+            //    };
+            //    BindingOperations.SetBinding(sh, ShellWindow.WindowStateProperty, ws);
+            //    sh.Closed += Sh_Closed;
 
-                StaticReferences.GlobalShell.SetCurrentValue(MahApps.Metro.Controls.MetroWindow.TitleBarHeightProperty, 25);
-                StaticReferences.GlobalShell.SetCurrentValue(Window.TitleProperty, "");
-            }
-            catch (Exception e)
-            {
-                StaticReferences.Logger.Error(e);
+            //    StaticReferences.GlobalShell.SetCurrentValue(MahApps.Metro.Controls.MetroWindow.TitleBarHeightProperty, 25);
+            //    StaticReferences.GlobalShell.SetCurrentValue(Window.TitleProperty, "");
+            //}
+            //catch (Exception e)
+            //{
+            //    StaticReferences.Logger.Error(e);
 
-            }
+            //}
 
+            return Task.CompletedTask;
         }
 
         private static void Sh_Closed(object sender, EventArgs e)
@@ -334,7 +331,8 @@ namespace WolvenKit.Functionality.Initialization
 
                 }
                 SfSkinManager.RegisterThemeSettings("MaterialDark", themeSettings);
-                SfSkinManager.SetTheme(StaticReferences.GlobalShell, new FluentTheme() { ThemeName = "MaterialDark", ShowAcrylicBackground = true });
+                //TODO:SHELL
+                //SfSkinManager.SetTheme(StaticReferences.GlobalShell, new FluentTheme() { ThemeName = "MaterialDark", ShowAcrylicBackground = true });
             }
             catch (Exception e)
             {

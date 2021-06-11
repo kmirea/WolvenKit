@@ -295,7 +295,7 @@ namespace WolvenKit.Views.Shell
 
         private void PART_DockingManager_ActiveWindowChanged_1(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            if (StaticReferences.GlobalShell != null)
+            if (StaticReferences.MainView != null)
             {
 
                 StaticReferences.RibbonViewInstance.cr2wcontextab.SetCurrentValue(ContextTabGroup.IsGroupVisibleProperty, false);
@@ -367,10 +367,6 @@ namespace WolvenKit.Views.Shell
 
                     if (((IDockElement)content.Content).State == DockState.Document)
                     {
-
-
-
-
                         SetCurrentValue(ActiveDocumentProperty, (IDockElement)content.Content);
                     }
                 }

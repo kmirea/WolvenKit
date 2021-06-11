@@ -1,6 +1,6 @@
 using Catel.IoC;
 using CP77.CR2W;
-using Microsoft.WindowsAPICodePack.Dialogs;
+//using Microsoft.WindowsAPICodePack.Dialogs;
 using WolvenKit.Functionality.Services;
 using WolvenKit.Modkit.RED4.Materials;
 using ModTools = WolvenKit.Modkit.RED4.ModTools;
@@ -35,22 +35,24 @@ namespace WolvenKit.Views.Dialogs
 
         private void matsbutton_Click(object sender, System.Windows.RoutedEventArgs e)
         {
-            CommonOpenFileDialog dialog = new CommonOpenFileDialog();
-            dialog.IsFolderPicker = true;
-            if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
-            {
-                Materialsrepotext.SetCurrentValue(System.Windows.Controls.TextBox.TextProperty, dialog.FileName);
-            }
+            //TODO:SHELL
+            //CommonOpenFileDialog dialog = new CommonOpenFileDialog();
+            //dialog.IsFolderPicker = true;
+            //if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
+            //{
+            //    Materialsrepotext.SetCurrentValue(System.Windows.Controls.TextBox.TextProperty, dialog.FileName);
+            //}
         }
 
         private void archivespathbutt_Click(object sender, System.Windows.RoutedEventArgs e)
         {
-            CommonOpenFileDialog dialog = new CommonOpenFileDialog();
-            dialog.IsFolderPicker = true;
-            if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
-            {
-                archivestext.SetCurrentValue(System.Windows.Controls.TextBox.TextProperty, dialog.FileName);
-            }
+            //TODO:SHELL
+            //CommonOpenFileDialog dialog = new CommonOpenFileDialog();
+            //dialog.IsFolderPicker = true;
+            //if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
+            //{
+            //    archivestext.SetCurrentValue(System.Windows.Controls.TextBox.TextProperty, dialog.FileName);
+            //}
         }
     }
 }

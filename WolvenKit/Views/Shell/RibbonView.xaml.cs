@@ -81,7 +81,7 @@ namespace WolvenKit.Views.Shell
         private void Backstage_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
             base.OnMouseLeftButtonDown(e);
-            StaticReferences.GlobalShell.DragMove();
+            StaticReferences.MainView.DragMove();
         }
 
         private void Border_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)

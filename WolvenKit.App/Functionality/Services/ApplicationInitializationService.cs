@@ -6,7 +6,6 @@ using Catel.IoC;
 using Catel.Logging;
 using Catel.MVVM;
 using Catel.Services;
-using Orchestra.Services;
 using ProtoBuf.Meta;
 using WolvenKit.Functionality.Services;
 using WolvenKit.Common;
@@ -16,7 +15,7 @@ using WolvenKit.RED4.CR2W.Archive;
 
 namespace WolvenKit.Functionality.Services
 {
-    public class ApplicationInitializationService : ApplicationInitializationServiceBase
+    public class ApplicationInitializationService
     {
         #region fields
 
@@ -25,8 +24,8 @@ namespace WolvenKit.Functionality.Services
         private readonly ICommandManager _commandManager;
         private readonly IPleaseWaitService _pleaseWaitService;
         private readonly IServiceLocator _serviceLocator;
-        public override bool ShowShell => true;
-        public override bool ShowSplashScreen => true;
+        public bool ShowShell => true;
+        public bool ShowSplashScreen => true;
 
         #endregion fields
 
@@ -48,14 +47,12 @@ namespace WolvenKit.Functionality.Services
 
         #region events
 
-        public override async Task InitializeAfterShowingShellAsync()
+        public void InitializeAfterShowingShellAsync()
         {
-            await base.InitializeAfterShowingShellAsync();
-
             LoadProject();
         }
 
-        public override async Task InitializeBeforeCreatingShellAsync()
+        public void InitializeBeforeCreatingShellAsync()
         {
             //protobuf
             RuntimeTypeModel.Default[typeof(IGameArchive)].AddSubType(20, typeof(Archive));
@@ -65,11 +62,11 @@ namespace WolvenKit.Functionality.Services
             InitializeCommands();
 
             // async
-            await RunAndWaitAsync(new Func<Task>[]
-            {
-                InitializePerformanceAsync,
-                CheckForUpdatesAsync
-            });
+            //await RunAndWaitAsync(new Func<Task>[]
+            //{
+            //    InitializePerformanceAsync,
+            //    CheckForUpdatesAsync
+            //});
         }
 
         // TODO: update main window title?
@@ -157,9 +154,10 @@ namespace WolvenKit.Functionality.Services
 
         private void InitializeFonts()
         {
-            // Orc.Theming.FontImage.RegisterFont("FontAwesome", new FontFamily(new Uri("pack://application:,,,/WolvenKit;component/Resources/Fonts/", UriKind.RelativeOrAbsolute), "./#FontAwesome"));
-            Orc.Theming.FontImage.DefaultFontFamily = "Segoe UI";
-            Orc.Theming.FontImage.DefaultBrush = new SolidColorBrush(Color.FromArgb(255, 87, 87, 87));
+            //TODO:SHELL
+            //// Orc.Theming.FontImage.RegisterFont("FontAwesome", new FontFamily(new Uri("pack://application:,,,/WolvenKit;component/Resources/Fonts/", UriKind.RelativeOrAbsolute), "./#FontAwesome"));
+            //Orc.Theming.FontImage.DefaultFontFamily = "Segoe UI";
+            //Orc.Theming.FontImage.DefaultBrush = new SolidColorBrush(Color.FromArgb(255, 87, 87, 87));
         }
 
         private Task InitializePerformanceAsync()

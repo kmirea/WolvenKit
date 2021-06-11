@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 using Catel;
 using Catel.Services;
 using WolvenKit.Functionality.Services;
-using Orc.CsvTextEditor;
 using WolvenKit.Common.Services;
 using WolvenKit.MVVM.Model.ProjectManagement.Project;
 
@@ -44,9 +43,6 @@ namespace WolvenKit.ViewModels.Editor
             _messageService = messageService;
 
 
-
-            EditorInstanceType = typeof(CsvTextEditorInstance);
-            
             SetupToolDefaults();
         }
 

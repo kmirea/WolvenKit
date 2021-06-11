@@ -6,9 +6,8 @@ using System.Text;
 using System.Threading.Tasks;
 using Catel.IoC;
 using Catel.Services;
-using Orchestra.Models;
-using Orchestra.Services;
 using WolvenKit.Common;
+using WolvenKit.Functionality.Services;
 
 namespace WolvenKit.Functionality.ProjectManagement
 {
@@ -53,7 +52,7 @@ namespace WolvenKit.Functionality.ProjectManagement
                         if (items.Count > 0)
                         {
                             var item = items.First();
-                            recentlyUsedItemsService.AddItem(new RecentlyUsedItem(parameter, item.DateTime));
+                            recentlyUsedItemsService.AddItem(new RecentlyUsedItemModel(parameter, item.DateTime));
                             recentlyUsedItemsService.RemoveItem(item);
                             return parameter;
                         }

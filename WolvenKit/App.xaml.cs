@@ -7,15 +7,23 @@ using System.Windows.Media;
 using Catel.IoC;
 using Catel.Logging;
 using Catel.Messaging;
+using CP77.CR2W;
 using FFmpeg.AutoGen;
 using HandyControl.Tools;
 using NodeNetwork;
-using Orchestra.Services;
 using Unosquare.FFME;
+using WolvenKit.Common.Services;
+using WolvenKit.Functionality.Controllers;
 using WolvenKit.Functionality.Helpers;
 using WolvenKit.Functionality.Initialization;
 using WolvenKit.Functionality.Services;
 using WolvenKit.Functionality.WKitGlobal.Helpers;
+using WolvenKit.Implementations;
+using WolvenKit.Modkit.RED3;
+using WolvenKit.Modkit.RED4;
+using WolvenKit.Modkit.RED4.MeshFile;
+using WolvenKit.Modkit.RED4.RigFile;
+using WolvenKit.RED4.CR2W;
 using WolvenKit.Views;
 using WolvenKit.Views.HomePage;
 using WolvenKit.Views.ViewModels;
@@ -56,7 +64,50 @@ namespace WolvenKit
 
             // Set service locator.
             var serviceLocator = ServiceLocator.Default;
-            serviceLocator.RegisterType<IRibbonService, RibbonService>();
+
+
+            // Wkit
+
+            var config = SettingsManager.Load();
+            serviceLocator.RegisterInstance(typeof(ISettingsManager), config);
+
+            serviceLocator.RegisterType<IGrowlNotificationService, GrowlNotificationService>();
+            serviceLocator.RegisterInstance(typeof(IProgress<double>), new MockProgressService());
+            serviceLocator.RegisterType<ILoggerService, CatelLoggerService>();
+
+            // singletons
+            serviceLocator.RegisterType<IHashService, HashService>();
+            serviceLocator.RegisterType<IRecentlyUsedItemsService, RecentlyUsedItemsService>();
+
+            serviceLocator.RegisterTypeAndInstantiate<IProjectManager, ProjectManager>();
+            serviceLocator.RegisterTypeAndInstantiate<IWatcherService, WatcherService>();
+            serviceLocator.RegisterType<MockGameController>();
+
+            serviceLocator.RegisterType<Red4ParserService>();
+            serviceLocator.RegisterType<TargetTools>();      //Cp77FileService
+            serviceLocator.RegisterType<RIG>();              //Cp77FileService
+            serviceLocator.RegisterType<MESHIMPORTER>();     //Cp77FileService
+            serviceLocator.RegisterType<MeshTools>();        //RIG, Cp77FileService
+
+            serviceLocator.RegisterType<ModTools>();         //Cp77FileService, ILoggerService, IProgress, IHashService, Mesh, Target
+
+            serviceLocator.RegisterType<Cp77Controller>();
+
+            // red3 modding tools
+            serviceLocator.RegisterType<Red3ModTools>();
+            serviceLocator.RegisterType<Tw3Controller>();
+
+
+
+
+            serviceLocator.RegisterType<IGameControllerFactory, GameControllerFactory>();
+
+
+            serviceLocator.RegisterTypeAndInstantiate<ApplicationInitializationService>();
+            var init = serviceLocator.ResolveType<ApplicationInitializationService>();
+            init.InitializeBeforeCreatingShellAsync();
+
+
 
 #if DEBUG
             LogManager.AddDebugListener(false);
@@ -65,7 +116,7 @@ namespace WolvenKit
             StaticReferences.Logger.Info("Starting application");
 
             StaticReferences.Logger.Info("Initializing MVVM");
-            await Initializations.InitializeMVVM();
+            Initializations.InitializeMVVM();
 
             StaticReferences.Logger.Info("Initializing Theme Helper");
             Initializations.InitializeThemeHelper();

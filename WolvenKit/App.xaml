@@ -8,7 +8,9 @@
     xmlns:viewmodels="clr-namespace:WolvenKit.ViewModels.Editor;assembly=WolvenKit.App"
     xmlns:views="clr-namespace:WolvenKit.Views.Editor"
     xmlns:views1="clr-namespace:WolvenKit.Views.Editor.VisualEditor"
-    xmlns:vm="clr-namespace:WolvenKit.Views.ViewModels">
+    xmlns:vm="clr-namespace:WolvenKit.Views.ViewModels"
+    StartupUri="Views/Shell/MainView.xaml"
+    >
 
     <Application.Resources>
         <ResourceDictionary>

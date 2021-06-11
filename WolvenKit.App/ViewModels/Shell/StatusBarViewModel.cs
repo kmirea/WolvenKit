@@ -12,7 +12,6 @@ using Catel.IoC;
 using Catel.MVVM;
 using Catel.Threading;
 using WolvenKit.Functionality.Services;
-using Orc.Squirrel;
 using WolvenKit.Functionality.WKitGlobal.Helpers;
 
 namespace WolvenKit.ViewModels.Shell
@@ -24,24 +23,21 @@ namespace WolvenKit.ViewModels.Shell
         private readonly IConfigurationService _configurationService;
         private readonly IProjectManager _projectManager;
         private readonly IServiceLocator _serviceLocator;
-        private readonly IUpdateService _updateService;
 
         #endregion Fields
 
         #region Constructors
 
-        public StatusBarViewModel(IProjectManager projectManager, IServiceLocator serviceLocator, IConfigurationService configurationService,
-            IUpdateService updateService)
+        public StatusBarViewModel(IProjectManager projectManager, IServiceLocator serviceLocator, IConfigurationService configurationService
+            )
         {
             Argument.IsNotNull(() => projectManager);
             Argument.IsNotNull(() => serviceLocator);
             Argument.IsNotNull(() => configurationService);
-            Argument.IsNotNull(() => updateService);
 
             _projectManager = projectManager;
             _serviceLocator = serviceLocator;
             _configurationService = configurationService;
-            _updateService = updateService;
             StaticReferencesVM.GlobalStatusBar = this;
 
             CurrentProject = "-";
@@ -69,7 +65,6 @@ namespace WolvenKit.ViewModels.Shell
         protected override async Task CloseAsync()
         {
             _configurationService.ConfigurationChanged -= OnConfigurationChanged;
-            _updateService.UpdateInstalled -= OnUpdateInstalled;
 
             await base.CloseAsync();
         }
@@ -79,9 +74,7 @@ namespace WolvenKit.ViewModels.Shell
             await base.InitializeAsync();
             StaticReferencesVM.GlobalStatusBar = this;
             _configurationService.ConfigurationChanged += OnConfigurationChanged;
-            _updateService.UpdateInstalled += OnUpdateInstalled;
 
-            IsUpdatedInstalled = _updateService.IsUpdatedInstalled;
             //Version = VersionHelper.GetCurrentVersion(); //TODO
             Version = "Version 0.8.1"; // TempFix
             var Connected = HandyControl.Tools.ApplicationHelper.IsConnectedToInternet();
@@ -90,35 +83,11 @@ namespace WolvenKit.ViewModels.Shell
 
             IsLoading = false;
             LoadingString = "";
-            UpdateAutoUpdateInfo();
         }
 
         private void OnConfigurationChanged(object sender, ConfigurationChangedEventArgs e)
         {
-            if (e.Key.Contains("Updates"))
-            {
-                UpdateAutoUpdateInfo();
-            }
-        }
 
-        private void OnUpdateInstalled(object sender, EventArgs e) => IsUpdatedInstalled = _updateService.IsUpdatedInstalled;
-
-        private void UpdateAutoUpdateInfo()
-        {
-            var updateInfo = string.Empty;
-
-            var checkForUpdates = _updateService.CheckForUpdates;
-            if (!_updateService.IsUpdateSystemAvailable || !checkForUpdates)
-            {
-                updateInfo = "Automatic updates disabled.";
-            }
-            else
-            {
-                var channel = _updateService.CurrentChannel.Name;
-                updateInfo = string.Format("Automatic updates enabled for {0} versions.", channel.ToLower());
-            }
-
-            ReceivingAutomaticUpdates = updateInfo;
         }
 
         #endregion Methods
