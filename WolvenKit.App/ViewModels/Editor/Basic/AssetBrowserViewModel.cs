@@ -161,7 +161,7 @@ namespace WolvenKit.ViewModels.Editor
 
         }
 
-        private void ExecuteImportFile() => ImportFile(SelectedNode);
+        private void ExecuteImportFile() => _ = ImportFile(SelectedNode);
 
 
 
@@ -305,7 +305,7 @@ namespace WolvenKit.ViewModels.Editor
             return ret.Values.ToList();
         }
 
-        private void ImportFile(AssetBrowserData item)
+        public async Task ImportFile(AssetBrowserData item)
         {
             switch (item.Type)
             {
@@ -319,7 +319,7 @@ namespace WolvenKit.ViewModels.Editor
                 }
                 case EntryType.File:
                 {
-                    Task.Run(new Action(() =>
+                    await Task.Run(new Action(() =>
                     {
                         if (item.This != null)
                         {

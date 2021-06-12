@@ -156,7 +156,7 @@ namespace WolvenKit.Views.Editor
         static readonly int FileImportLimit = 100;
         static int idx = 0;
 
-        private void executeFile(AssetBrowserViewModel vm, Common.Model.AssetBrowserData selectedData)
+        private async Task executeFile(AssetBrowserViewModel vm, Common.Model.AssetBrowserData selectedData)
         {
             switch (selectedData.Type)
             {
@@ -164,7 +164,7 @@ namespace WolvenKit.Views.Editor
                 {
                     foreach (var data in selectedData.Children.ToAssetBrowserData())
                     {
-                        executeFile(vm, data);
+                        await executeFile(vm, data);
                     }
                     break;
                 }
@@ -174,7 +174,7 @@ namespace WolvenKit.Views.Editor
                         return;
                     idx++;
                     vm.SelectedNode = selectedData;
-                    vm.ImportFileCommand.Execute(selectedData);
+                    await vm.ImportFile(selectedData);
                     break;
                 }
             }
@@ -182,35 +182,69 @@ namespace WolvenKit.Views.Editor
 
         public void RevampedImport()
         {
-
-            var vm = ViewModel as AssetBrowserViewModel;
-            if (vm != null)
+            Task.Run(async () =>
             {
-                idx = 0;
-                foreach (var selectedItem in InnerList.SelectedItems)
+                var notificationsWereEnabled = NotificationHelper.Growl.IsShowNotificationsEnabled;
+                NotificationHelper.Growl.IsShowNotificationsEnabled = false;
+                await Dispatcher.Invoke(async () =>
                 {
-                    var selectedData = selectedItem as Common.Model.AssetBrowserData;
-                    if (selectedData == null)
-                        continue;
-                    executeFile(vm, selectedData);
-                }
-            }
+                    if (ViewModel is AssetBrowserViewModel vm)
+                    {
+                        idx = 0;
+                        foreach (var selectedItem in InnerList.SelectedItems)
+                        {
+                            var selectedData = selectedItem as Common.Model.AssetBrowserData;
+                            if (selectedData == null)
+                                continue;
+                            if (notificationsWereEnabled && selectedData.Type == Common.Model.EntryType.File && InnerList.SelectedItems.Count == 1)
+                            {
+                                NotificationHelper.Growl.IsShowNotificationsEnabled = true;
+                            }
+                            await executeFile(vm, selectedData);
+                        }
+                    }
+                    if (notificationsWereEnabled && !NotificationHelper.Growl.IsShowNotificationsEnabled)
+                    {
+                        var suffix = idx <= 1 ? "" : "s";
+                        NotificationHelper.Growl.Info($"Added {idx} file{suffix} to project.");
+                        NotificationHelper.Growl.IsShowNotificationsEnabled = true;
+                    }
+                });
+            });
         }
 
         private void MenuItem_ImportSelected_Click(object sender, RoutedEventArgs e)
         {
-            var mi = sender as MenuItem;
-            if (mi?.DataContext is GridRecordContextMenuInfo gridRecordContextMenuInfo && ViewModel is AssetBrowserViewModel vm)
+            Task.Run(async () =>
             {
-                idx = 0;
-                foreach (var selectedItem in gridRecordContextMenuInfo.DataGrid.SelectedItems)
+                var notificationsWereEnabled = NotificationHelper.Growl.IsShowNotificationsEnabled;
+                NotificationHelper.Growl.IsShowNotificationsEnabled = false;
+                await Dispatcher.Invoke(async () =>
                 {
-                    var selectedData = selectedItem as Common.Model.AssetBrowserData;
-                    if (selectedData == null)
-                        continue;
-                    executeFile(vm, selectedData);
-                }
-            }
+                    var mi = sender as MenuItem;
+                    if (mi?.DataContext is GridRecordContextMenuInfo gridRecordContextMenuInfo && ViewModel is AssetBrowserViewModel vm)
+                    {
+                        idx = 0;
+                        foreach (var selectedItem in gridRecordContextMenuInfo.DataGrid.SelectedItems)
+                        {
+                            var selectedData = selectedItem as Common.Model.AssetBrowserData;
+                            if (selectedData == null)
+                                continue;
+                            if (notificationsWereEnabled && selectedData.Type == Common.Model.EntryType.File && gridRecordContextMenuInfo.DataGrid.SelectedItems.Count == 1)
+                            {
+                                NotificationHelper.Growl.IsShowNotificationsEnabled = true;
+                            }
+                            await executeFile(vm, selectedData);
+                        }
+                    }
+                    if (notificationsWereEnabled && !NotificationHelper.Growl.IsShowNotificationsEnabled)
+                    {
+                        var suffix = idx <= 1 ? "" : "s";
+                        NotificationHelper.Growl.Info($"Added {idx} file{suffix} to project.");
+                        NotificationHelper.Growl.IsShowNotificationsEnabled = true;
+                    }
+                });
+            });
         }
 
         private async void InnerList_SelectionChanged(object sender, Syncfusion.UI.Xaml.Grid.GridSelectionChangedEventArgs e)

@@ -265,7 +265,10 @@ namespace WolvenKit.Functionality.Controllers
         public void AddToMod(IGameFile file)
         {
             var project = _projectManager.ActiveProject;
-            NotificationHelper.Growl.Info($"Added file: {file.Name} to project: {project.Name} ");
+            if (NotificationHelper.Growl.IsShowNotificationsEnabled)
+            {
+                NotificationHelper.Growl.Info($"Added file: {file.Name} to project: {project.Name} ");
+            }
 
             switch (project.GameType)
             {
