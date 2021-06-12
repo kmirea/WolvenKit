@@ -8,15 +8,15 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using ProtoBuf.Meta;
 using WolvenKit.Common;
-using WolvenKit.Common.Oodle;
 using WolvenKit.Common.Services;
 using WolvenKit.Common.Tools.Oodle;
 using WolvenKit.Modkit.RED4.MeshFile;
 using WolvenKit.Modkit.RED4.RigFile;
 using WolvenKit.RED4.CR2W;
 using WolvenKit.RED4.CR2W.Archive;
+using ModTools = WolvenKit.Modkit.RED4.ModTools;
 
-namespace WolvenKit.CLI.MSTests
+namespace WolvenKit.MSTests
 {
     [TestClass]
     public class GameUnitTest
@@ -29,7 +29,7 @@ namespace WolvenKit.CLI.MSTests
         internal static bool s_writeToFile;
         private const string s_gameDirectorySetting = "GameDirectory";
         private const string s_writeToFileSetting = "WriteToFile";
-        private static IConfigurationRoot s_config;
+        protected static IConfigurationRoot s_config;
         public static string s_gameDirectoryPath;
 
         #endregion Fields
@@ -104,7 +104,8 @@ namespace WolvenKit.CLI.MSTests
 
 
             s_bm = new ArchiveManager(hashService);
-            s_bm.LoadAll(gameBinDir.FullName, false);
+            var archivedir = Path.Combine(gameDirectory.FullName, "archive", "pc", "content");
+            s_bm.LoadFromFolder(archivedir);
             s_groupedFiles = s_bm.GroupedFiles;
 
 

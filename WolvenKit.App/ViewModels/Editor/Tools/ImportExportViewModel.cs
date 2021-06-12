@@ -6,24 +6,29 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using System.Linq;
 using Catel;
+using Catel.MVVM;
 using Catel.Services;
-using CP77.CR2W;
 using DynamicData;
+using DynamicData.Binding;
 using ReactiveUI;
-using WolvenKit.Common;
 using WolvenKit.Common.Model.Arguments;
+using WolvenKit.Models.Arguments;
 using WolvenKit.Common.Services;
 using WolvenKit.Functionality.Commands;
 using WolvenKit.Functionality.Controllers;
 using WolvenKit.Functionality.Services;
-using WolvenKit.Models;
 using WolvenKit.RED4.CR2W.Archive;
-using ObservableObject = Catel.Data.ObservableObject;
+using ModTools = WolvenKit.Modkit.RED4.ModTools;
+using Orchestra.Services;
 
 namespace WolvenKit.ViewModels.Editor
 {
     public class ImportExportViewModel : ToolViewModel
     {
+        #region fields
+
+        private const string s_selectedInGrid = "Selected in Grid";
+
         /// <summary>
         /// Identifies the <see ref="ContentId"/> of this tool window.
         /// </summary>
@@ -35,19 +40,106 @@ namespace WolvenKit.ViewModels.Editor
         public const string ToolTitle = "Import Export Tool";
 
         /// <summary>
+        /// Private Readonly ModTools
+        /// </summary>
+        private readonly ModTools _modTools;
+
+        private readonly ILoggerService _loggerService;
+        private readonly IMessageService _messageService;
+        private readonly IGrowlNotificationService _notificationService;
+        private readonly IProjectManager _projectManager;
+        private readonly IWatcherService _watcherService;
+        private readonly IGameControllerFactory _gameController;
+
+        /// <summary>
+        /// Private NameOf Selected Item in Grid.
+        /// </summary>
+        private string _CurrentSelectionInGridName;
+
+        /// <summary>
+        /// Private Last Selected Item, Used for Selection Lock.
+        /// </summary>
+        private ImportExportItemViewModel lastselected;
+
+        /// <summary>
         /// Private Importable Items
         /// </summary>
         private readonly ReadOnlyObservableCollection<ImportableItemViewModel> _importableItems;
 
         /// <summary>
-        /// Public Importable Items
-        /// </summary>
-        public ReadOnlyObservableCollection<ImportableItemViewModel> ImportableItems => _importableItems;
-
-        /// <summary>
         /// Private Exportable Items
         /// </summary>
         private readonly ReadOnlyObservableCollection<ExportableItemViewModel> _exportableItems;
+
+        #endregion fields
+
+        /// <summary>
+        /// Import Export ViewModel Constructor
+        /// </summary>
+        /// <param name="projectManager"></param>
+        /// <param name="loggerService"></param>
+        /// <param name="messageService"></param>
+        /// <param name="watcherService"></param>
+        /// <param name="gameController"></param>
+        /// <param name="modTools"></param>
+        public ImportExportViewModel(
+           IProjectManager projectManager,
+           ILoggerService loggerService,
+           IMessageService messageService,
+           IWatcherService watcherService,
+           IGrowlNotificationService notificationService,
+           IGameControllerFactory gameController,
+           ModTools modTools
+           ) : base(ToolTitle)
+        {
+            Argument.IsNotNull(() => projectManager);
+            Argument.IsNotNull(() => messageService);
+            Argument.IsNotNull(() => loggerService);
+            Argument.IsNotNull(() => watcherService);
+            Argument.IsNotNull(() => modTools);
+            Argument.IsNotNull(() => gameController);
+            Argument.IsNotNull(() => notificationService);
+
+            _projectManager = projectManager;
+            _loggerService = loggerService;
+            _messageService = messageService;
+            _watcherService = watcherService;
+            _modTools = modTools;
+            _gameController = gameController;
+            _notificationService = notificationService;
+
+            SetupToolDefaults();
+
+            ProcessAllCommand = new TaskCommand(ExecuteProcessAll, CanProcessAll);
+            ProcessSelectedCommand = new TaskCommand(ExecuteProcessSelected, CanProcessSelected);
+
+            CopyArgumentsTemplateToCommand = new DelegateCommand<string>(ExecuteCopyArgumentsTemplateTo, CanCopyArgumentsTemplateTo);
+
+            _watcherService.Files
+                .Connect()
+                .Filter(_ => _.IsImportable)
+                .Filter(_ => _.FullName.Contains(_projectManager.ActiveProject.RawDirectory))
+                .Transform(_ => new ImportableItemViewModel(_))
+                .ObserveOn(RxApp.MainThreadScheduler)
+                .Bind(out _importableItems)
+                .Subscribe();
+
+            _watcherService.Files
+                .Connect()
+                .Filter(_ => _.IsExportable)
+                .Filter(_ => _.FullName.Contains(_projectManager.ActiveProject.ModDirectory))
+                .Transform(_ => new ExportableItemViewModel(_))
+                .ObserveOn(RxApp.MainThreadScheduler)
+                .Bind(out _exportableItems)
+                .Subscribe();
+        }
+
+        #region properties
+
+        /// <summary>
+        /// Public Importable Items
+        /// </summary>
+        public ReadOnlyObservableCollection<ImportableItemViewModel> ImportableItems => _importableItems;
 
         /// <summary>
         /// Public Exportable items.
@@ -69,15 +161,7 @@ namespace WolvenKit.ViewModels.Editor
         /// </summary>
         public ImportExportItemViewModel SelectedObject => IsImportsSelected ? SelectedImport : SelectedExport;
 
-        /// <summary>
-        /// Private NameOf Selected Item in Grid.
-        /// </summary>
-        private string _CurrentSelectionInGridName;
-
-        /// <summary>
-        /// Private Last Selected Item, Used for Selection Lock.
-        /// </summary>
-        private ImportExportItemViewModel lastselected;
+        public bool? IsHeaderChecked { get; set; }
 
         /// <summary>
         /// Lock Selection of items in grid.
@@ -87,8 +171,10 @@ namespace WolvenKit.ViewModels.Editor
         /// <summary>
         /// Returns the name of current selected object in Import/Export Grid.
         /// </summary>
-        public string CurrentSelectedInGridName {
-           get {
+        public string CurrentSelectedInGridName
+        {
+            get
+            {
                 if (SelectedObject != null)
                 {
                     if (!SelectionLocked)
@@ -96,103 +182,77 @@ namespace WolvenKit.ViewModels.Editor
                         lastselected = SelectedObject;
                         return SelectedObject.Name;
                     }
-                    else{return lastselected.Name;}
+                    else
+                    {
+                        if (lastselected == null)
+                        { return ""; }
+                        else
+                        {
+                            return lastselected.Name;
+                        }
+                    }
                 }
-                else{return "";}
-            } set { _CurrentSelectionInGridName = value; }
-        }
-
-        /// <summary>
-        /// Private Readonly ModTools
-        /// </summary>
-        private readonly ModTools _modTools;
-
-        /// <summary>
-        /// Private Logger Service
-        /// </summary>
-        private readonly ILoggerService _loggerService;
-
-        /// <summary>
-        /// Private Message Service
-        /// </summary>
-        private readonly IMessageService _messageService;
-
-        /// <summary>
-        /// Private Project Manager
-        /// </summary>
-        private readonly IProjectManager _projectManager;
-
-        /// <summary>
-        /// Private WatcherService
-        /// </summary>
-        private readonly IWatcherService _watcherService;
-
-        /// <summary>
-        /// Private GameController
-        /// </summary>
-        private readonly IGameControllerFactory _gameController;
-
-        /// <summary>
-        /// Import Export ViewModel Constructor
-        /// </summary>
-        /// <param name="projectManager"></param>
-        /// <param name="loggerService"></param>
-        /// <param name="messageService"></param>
-        /// <param name="watcherService"></param>
-        /// <param name="gameController"></param>
-        /// <param name="modTools"></param>
-        public ImportExportViewModel(
-           IProjectManager projectManager,
-           ILoggerService loggerService,
-           IMessageService messageService,
-           IWatcherService watcherService,
-           IGameControllerFactory gameController,
-           ModTools modTools
-           ) : base(ToolTitle)
-        {
-            Argument.IsNotNull(() => projectManager);
-            Argument.IsNotNull(() => messageService);
-            Argument.IsNotNull(() => loggerService);
-            Argument.IsNotNull(() => watcherService);
-            Argument.IsNotNull(() => modTools);
-            Argument.IsNotNull(() => gameController);
-
-
-            _projectManager = projectManager;
-            _loggerService = loggerService;
-            _messageService = messageService;
-            _watcherService = watcherService;
-            _modTools = modTools;
-            _gameController = gameController;
-
-            SetupToolDefaults();
-
-
-            ProcessAllCommand = new RelayCommand(ExecuteProcessAll, CanProcessAll);
-            ProcessSelectedCommand = new RelayCommand(ExecuteProcessSelected, CanProcessSelected);
-
-            _watcherService.Files
-                .Connect()
-                .Filter(_ => _.IsImportable)
-                .Transform(_ => new ImportableItemViewModel(_))
-                .ObserveOn(RxApp.MainThreadScheduler)
-                .Bind(out _importableItems)
-                .Subscribe();
-
-            _watcherService.Files
-                .Connect()
-                .Filter(_ => _.IsExportable)
-                .Transform(_ => new ExportableItemViewModel(_))
-                .ObserveOn(RxApp.MainThreadScheduler)
-                .Bind(out _exportableItems)
-                .Subscribe();
-
+                else
+                { return ""; }
+            }
+            set => _CurrentSelectionInGridName = value;
         }
 
         /// <summary>
         /// Is Import Selected, if false Export is default.
         /// </summary>
         public bool IsImportsSelected { get; set; }
+
+        #endregion properties
+
+        public ICommand CopyArgumentsTemplateToCommand { get; private set; }
+
+        private bool CanCopyArgumentsTemplateTo(string param) => true;
+
+        private void ExecuteCopyArgumentsTemplateTo(string param)
+        {
+            var current = SelectedObject.Properties;
+
+            if (IsImportsSelected)
+            {
+                if (current is not ImportArgs importArgs)
+                {
+                    return;
+                }
+
+                var results = param switch
+                {
+                    s_selectedInGrid => ImportableItems.Where(_ => _.IsChecked),
+                    _ => ImportableItems
+                };
+
+                foreach (var item in results.Where(item => item.Properties.GetType() == current.GetType()))
+                {
+                    item.Properties = importArgs;
+                }
+            }
+            else
+            {
+                if (current is not ExportArgs exportArgs)
+                {
+                    return;
+                }
+
+                var results = param switch
+                {
+                    s_selectedInGrid => ExportableItems.Where(_ => _.IsChecked),
+                    _ => ExportableItems
+                };
+
+                foreach (var item in results.Where(item => item.Properties.GetType() == current.GetType()))
+                {
+                    item.Properties = exportArgs;
+                }
+            }
+            _notificationService.Success($"Template has been copied to the selected items.");
+        }
+
+        public bool IsProcessing { get; set; } = false;
 
         /// <summary>
         /// Process all in Import / Export Grid Command.
@@ -208,35 +268,40 @@ namespace WolvenKit.ViewModels.Editor
         /// <summary>
         /// Execute Process all in Import / Export Grid Command.
         /// </summary>
-        private void ExecuteProcessAll()
+        private async Task ExecuteProcessAll()
         {
+            IsProcessing = true;
+
             if (IsImportsSelected)
             {
                 foreach (var item in ImportableItems)
                 {
-                    ImportSingle(item);
+                    await ImportSingle(item);
                 }
             }
             else
             {
                 foreach (var item in ExportableItems)
                 {
-                    ExportSingle(item);
+                    await ExportSingle(item);
                 }
-
             }
+            IsProcessing = false;
+            _notificationService.Success($"Files have been processed and are available in the Project Explorer");
         }
 
         /// <summary>
         /// Import Single item
         /// </summary>
         /// <param name="item"></param>
-        private void ImportSingle(ImportableItemViewModel item)
+        private async Task ImportSingle(ImportableItemViewModel item)
         {
+            var proj = _projectManager.ActiveProject;
             var fi = new FileInfo(item.FullName);
             if (fi.Exists)
             {
-                _modTools.Import(fi, item.Properties as ImportArgs);
+                var settings = new GlobalImportArgs().Register(item.Properties as ImportArgs);
+                await Task.Run(() => _modTools.Import(fi, settings, new DirectoryInfo(proj.ModDirectory)));
             }
         }
 
@@ -244,7 +309,7 @@ namespace WolvenKit.ViewModels.Editor
         /// Export Single Item
         /// </summary>
         /// <param name="item"></param>
-        private void ExportSingle(ExportableItemViewModel item)
+        private async Task ExportSingle(ExportableItemViewModel item)
         {
             var proj = _projectManager.ActiveProject;
             var fi = new FileInfo(item.FullName);
@@ -252,15 +317,18 @@ namespace WolvenKit.ViewModels.Editor
             {
                 if (item.Properties is MeshExportArgs meshExportArgs)
                 {
-                    var cp77controller = _gameController.GetController() as Cp77Controller;
-                    var archivemanager =
-                        cp77controller.GetArchiveManagersManagers(false).First() as ArchiveManager;
-                    meshExportArgs.Archives = archivemanager.Archives.Values.Cast<Archive>().ToList();
+                    if (_gameController.GetController() is Cp77Controller cp77Controller)
+                    {
+                        var archivemanager = cp77Controller.GetArchiveManagersManagers(false).First() as ArchiveManager;
+                        meshExportArgs.Archives = archivemanager.Archives.Values.Cast<Archive>().ToList();
+                    }
                 }
 
                 var settings = new GlobalExportArgs().Register(item.Properties as ExportArgs);
-                _modTools.Export(fi, settings, new DirectoryInfo(proj.ModDirectory),
-                    new DirectoryInfo(proj.RawDirectory));
+                await Task.Run(() => _modTools.Export(fi, settings,
+                    new DirectoryInfo(proj.ModDirectory),
+                    new DirectoryInfo(proj.RawDirectory)));
+
             }
         }
 
@@ -278,25 +346,26 @@ namespace WolvenKit.ViewModels.Editor
         /// <summary>
         /// Execute Process selected in Import / Export Grid Command
         /// </summary>
-        private void ExecuteProcessSelected()
+        private async Task ExecuteProcessSelected()
         {
+            IsProcessing = true;
             if (IsImportsSelected)
             {
                 foreach (var item in ImportableItems.Where(_ => _.IsChecked))
                 {
-                    ImportSingle(item);
+                    await ImportSingle(item);
                 }
             }
             else
             {
                 foreach (var item in ExportableItems.Where(_ => _.IsChecked))
                 {
-                    ExportSingle(item);
+                    await ExportSingle(item);
                 }
-
             }
+            IsProcessing = false;
+            _notificationService.Success($"Files have been processed and are available in the Project Explorer");
         }
-
 
         /// <summary>
         /// Close Async
@@ -318,123 +387,5 @@ namespace WolvenKit.ViewModels.Editor
         /// Setup Tool defaults for tool window.
         /// </summary>
         private void SetupToolDefaults() => ContentId = ToolContentId;
-
     }
-
-
-
-    /// <summary>
-    /// ImportExportItem ViewModel
-    /// </summary>
-    public abstract class ImportExportItemViewModel : ObservableObject
-    {
-        /// <summary>
-        /// BaseFile "FileModel"
-        /// </summary>
-        protected FileModel BaseFile { get; set; }
-
-        /// <summary>
-        /// Properties
-        /// </summary>
-        public ImportExportArgs Properties
-        {
-            get => _properties;
-            set
-            {
-                if (_properties != value)
-                {
-                    var oldValue = _properties;
-                    _properties = value;
-                    RaisePropertyChanged(() => Properties, oldValue, value);
-                    RaisePropertyChanged(() => ExportTaskIdentifier);
-                }
-            }
-        }
-
-        private ImportExportArgs _properties;
-
-        public string ExportTaskIdentifier => Properties.ToString();
-
-        public string Extension => BaseFile.GetExtension();
-        public string FullName => BaseFile.FullName;
-        public string Name => BaseFile.Name;
-
-
-        public bool IsChecked { get; set; }
-
-
-
-        public EExportState ExportState => BaseFile.IsImportable ? EExportState.Importable : EExportState.Exportable;
-    }
-
-
-    public class ImportableItemViewModel : ImportExportItemViewModel
-    {
-        public ImportableItemViewModel(FileModel model)
-        {
-            BaseFile = model;
-            Properties = DecideImportOptions(model);
-        }
-
-        private ImportArgs DecideImportOptions(FileModel model)
-        {
-
-            _ = Enum.TryParse(model.GetExtension(), out ERawFileFormat Extension);
-
-            switch (Extension)
-            {
-                case ERawFileFormat.tga:
-                case ERawFileFormat.dds:
-                    return new XbmImportArgs();
-                case ERawFileFormat.fbx:
-                    return new CommonImportArgs();
-
-                case ERawFileFormat.glb:
-                case ERawFileFormat.gltf:
-                    return new MeshImportArgs();
-
-
-                default:
-                    return new CommonImportArgs();
-            }
-        }
-    }
-    public class ExportableItemViewModel : ImportExportItemViewModel
-    {
-        public ExportableItemViewModel(FileModel model)
-        {
-            BaseFile = model;
-            Properties = DecideExportOptions(model);
-        }
-
-        private ExportArgs DecideExportOptions(FileModel model)
-        {
-
-            _ = Enum.TryParse(model.GetExtension(), out ECookedFileFormat Extension);
-
-            switch (Extension)
-            {
-                case ECookedFileFormat.mesh:
-                    return new MeshExportArgs();
-                case ECookedFileFormat.xbm:
-                    return new XbmExportArgs();
-                case ECookedFileFormat.wem:
-                    return new WemExportArgs();
-                case ECookedFileFormat.csv:
-                case ECookedFileFormat.json:
-                case ECookedFileFormat.mlmask:
-                case ECookedFileFormat.cubemap:
-                case ECookedFileFormat.envprobe:
-                case ECookedFileFormat.texarray:
-                    return new CommonExportArgs();
-                case ECookedFileFormat.morphtarget:
-                    return new MorphTargetExportArgs();
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
-        }
-    }
-
-
-
 }

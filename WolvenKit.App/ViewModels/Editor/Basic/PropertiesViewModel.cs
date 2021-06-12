@@ -14,6 +14,7 @@ using Catel.Services;
 using CP77.CR2W;
 using Microsoft.Win32;
 using NAudio.Wave;
+using WolvenKit.Models.Arguments;
 using WolvenKit.Common;
 using WolvenKit.Common.DDS;
 using WolvenKit.Common.Model;
@@ -26,6 +27,7 @@ using WolvenKit.Functionality.WKitGlobal;
 using WolvenKit.Models;
 using WolvenKit.Modkit.RED4.MeshFile;
 using WolvenKit.Views.Editor.AudioTool;
+using ModTools = WolvenKit.Modkit.RED4.ModTools;
 
 namespace WolvenKit.ViewModels.Editor
 {

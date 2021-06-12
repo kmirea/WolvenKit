@@ -14,18 +14,21 @@ using CP77.CR2W;
 using WolvenKit.RED4.CR2W;
 using CP77Tools.Commands;
 using CP77Tools.Tasks;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using WolvenKit.CLI;
 using WolvenKit.CLI.Services;
 using WolvenKit.Common;
+using WolvenKit.Common.Model.Arguments;
 using WolvenKit.Common.Services;
 using WolvenKit.Common.Tools.Oodle;
 using WolvenKit.Core.Services;
 using WolvenKit.Modkit.RED4.Materials;
 using WolvenKit.Modkit.RED4.MeshFile;
 using WolvenKit.Modkit.RED4.RigFile;
+using ModTools = WolvenKit.Modkit.RED4.ModTools;
 
 namespace WolvenKit.CLI
 {
@@ -53,23 +56,30 @@ namespace WolvenKit.CLI
 
                 new UnbundleCommand(),
                 new UncookCommand(),
-                new RebuildCommand(),
+                new ImportCommand(),
                 new PackCommand(),
                 new ExportCommand(),
 
                 new DumpCommand(),
-                new VerifyCommand(),
                 new CR2WCommand(),
 
                 new HashCommand(),
                 new OodleCommand(),
+
+                new SettingsCommand(),
             };
 
             var parser = new CommandLineBuilder(rootCommand)
                 .UseDefaults()
                 .UseHost(Host.CreateDefaultBuilder, host =>
                     {
-                        host.ConfigureLogging(logging =>
+                        host
+                            .ConfigureAppConfiguration((hostingContext, configuration) =>
+                            {
+                                configuration
+                                    .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
+                            })
+                            .ConfigureLogging(logging =>
                             {
                                 logging.ClearProviders();
                                 logging.AddColorConsoleLogger(configuration =>
@@ -98,11 +108,18 @@ namespace WolvenKit.CLI
 
                                 //services.AddScoped<MaterialTools>();    //ModTools, Cp77FileService, CookingUtilities
 
+                                services.AddOptions<CommonImportArgs>().Bind(hostContext.Configuration.GetSection("CommonImportArgs"));
+                                services.AddOptions<XbmImportArgs>().Bind(hostContext.Configuration.GetSection("XbmImportArgs"));
+                                services.AddOptions<MeshImportArgs>().Bind(hostContext.Configuration.GetSection("MeshImportArgs"));
 
+                                services.AddOptions<XbmExportArgs>().Bind(hostContext.Configuration.GetSection("XbmExportArgs"));
+                                services.AddOptions<MeshExportArgs>().Bind(hostContext.Configuration.GetSection("MeshExportArgs"));
+                                services.AddOptions<MorphTargetExportArgs>().Bind(hostContext.Configuration.GetSection("MorphTargetExportArgs"));
+                                services.AddOptions<MlmaskExportArgs>().Bind(hostContext.Configuration.GetSection("MlmaskExportArgs"));
+                                services.AddOptions<WemExportArgs>().Bind(hostContext.Configuration.GetSection("WemExportArgs"));
 
                                 services.AddScoped<ConsoleFunctions>();
                             })
-
                             ;
                     })
                 .Build();

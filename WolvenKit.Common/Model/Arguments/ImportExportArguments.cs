@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using WolvenKit.Common.DDS;
 using WolvenKit.Common.Wcc;
 using WolvenKit.RED4.CR2W.Archive;
+using WolvenKit.RED4.CR2W.Types;
 
 namespace WolvenKit.Common.Model.Arguments
 {
@@ -68,13 +69,67 @@ namespace WolvenKit.Common.Model.Arguments
 
             return null;
         }
+    }
 
+    /// <summary>
+    /// Global Export Arguments
+    /// </summary>
+    public class GlobalImportArgs
+    {
+        /// <summary>
+        /// Export Argument Dictionary.
+        /// </summary>
+        private readonly Dictionary<Type, ImportArgs> _argsList = new()
+        {
+            { typeof(CommonImportArgs), new CommonImportArgs() },
+            { typeof(XbmImportArgs), new XbmImportArgs() },
+            { typeof(MeshImportArgs), new MeshImportArgs() },
+        };
+
+        /// <summary>
+        /// Register Export Arguments.
+        /// </summary>
+        /// <param name="exportArgs"></param>
+        /// <returns></returns>
+        public GlobalImportArgs Register(params ImportArgs[] exportArgs)
+        {
+            foreach (var arg in exportArgs)
+            {
+                var type = arg.GetType();
+                if (_argsList.ContainsKey(type))
+                {
+                    _argsList[type] = arg;
+                }
+                else
+                {
+                    _argsList.Add(type, arg);
+                }
+            }
+
+            return this;
+        }
+
+        /// <summary>
+        /// Get Argument.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        public T Get<T>() where T : ImportArgs
+        {
+            var arg = _argsList[typeof(T)];
+            if (arg is T t)
+            {
+                return t;
+            }
+
+            return null;
+        }
     }
 
     /// <summary>
     /// Import Export Arguments
     /// </summary>
-    public abstract class ImportExportArgs : Catel.Data.ObservableObject
+    public abstract class ImportExportArgs : ObservableObject
     {
     }
 
@@ -83,7 +138,10 @@ namespace WolvenKit.Common.Model.Arguments
     /// </summary>
     public abstract class ImportArgs : ImportExportArgs
     {
-
+        [Category("Default Import Settings")]
+        [Display(Name = "Replace original File?")]
+        [Description("If checked the file will replace the original file in the archives.")]
+        public bool Keep { get; set; }
     }
 
     /// <summary>
@@ -91,21 +149,15 @@ namespace WolvenKit.Common.Model.Arguments
     /// </summary>
     public abstract class ExportArgs : ImportExportArgs
     {
-
-        [Browsable(false)]
-        public string FileName { get; set; }
     }
 
-
     #region import args
-
 
     /// <summary>
     /// Common Import Arguments
     /// </summary>
     public class CommonImportArgs : ImportArgs
     {
-
     }
 
     /// <summary>
@@ -113,7 +165,7 @@ namespace WolvenKit.Common.Model.Arguments
     /// </summary>
     public class XbmImportArgs : ImportArgs
     {
-        public ETextureGroup TextureGroup { get; internal set; }
+        public Enums.GpuWrapApieTextureGroup TextureGroup { get; internal set; }
 
         /// <summary>
         /// String Override to display info in datagrid.
@@ -134,11 +186,9 @@ namespace WolvenKit.Common.Model.Arguments
         /// </summary>
         /// <returns>String</returns>
         public override string ToString() => ".Mesh";
-
     }
 
-    #endregion
-
+    #endregion import args
 
     #region export args
 
@@ -147,7 +197,6 @@ namespace WolvenKit.Common.Model.Arguments
     /// </summary>
     public class CommonExportArgs : ExportArgs
     {
-
     }
 
     /// <summary>
@@ -168,7 +217,6 @@ namespace WolvenKit.Common.Model.Arguments
         /// </summary>
         /// <returns>String</returns>
         public override string ToString() => "GLTF/GLB | " + $"Is Binary :  {IsBinary.ToString()}";
-
     }
 
     /// <summary>
@@ -188,7 +236,6 @@ namespace WolvenKit.Common.Model.Arguments
         /// </summary>
         /// <returns>String</returns>
         public override string ToString() => $"{UncookExtension.ToString()}";
-
     }
 
     /// <summary>
@@ -197,28 +244,11 @@ namespace WolvenKit.Common.Model.Arguments
     public class XbmExportArgs : ExportArgs
     {
         /// <summary>
-        /// Private Uncook Format.
-        /// </summary>
-        private EUncookExtension _uncookExtension;
-
-        /// <summary>
         ///  Uncook Format for XBM.
         /// </summary>
         [Category("Export Type")]
         [Display(Name = "XBM Export Type")]
-        public EUncookExtension UncookExtension
-        {
-            get => _uncookExtension;
-            set
-            {
-                if (_uncookExtension != value)
-                {
-                    var oldValue = _uncookExtension;
-                    _uncookExtension = value;
-                    RaisePropertyChanged(() => UncookExtension, oldValue, value);
-                }
-            }
-        }
+        public EUncookExtension UncookExtension { get; set; }
 
         /// <summary>
         /// Flip Image argument
@@ -233,7 +263,6 @@ namespace WolvenKit.Common.Model.Arguments
         /// <returns>String</returns>
         public override string ToString() => $"{UncookExtension.ToString()} | Flip : {Flip.ToString()}";
     }
-
 
     /// <summary>
     /// Mesh Export Arguments
@@ -292,81 +321,82 @@ namespace WolvenKit.Common.Model.Arguments
         public List<Archive> Archives { get; set; } = new();
 
         /// <summary>
-        /// String Override to display info in datagrid.
+        /// Optional archive path for WithMaterials Mesh Export.
         /// </summary>
-        /// <returns>String</returns>
-        public override string ToString() => "GLTF/GLB | " +  $"Lod filter : {LodFilter.ToString()} | Is Binary : {isGLBinary.ToString()}";
-
-    }
-
-    /// <summary>
-    /// WithMaterials Mesh Export Arguments.
-    /// </summary>
-    public class WithMaterialMeshArgs
-    {
-        /// <summary>
-        /// Uncook Format for material files. (DDS,TGA,PNG Etc)
-        /// </summary>
-        [Category("WithMaterials Settings")]
-        [Display(Name = "Select Export Format")]
-        [Description("Exports textures(dds,png,tga etc) and material helper data with the mesh.")]
-        public EUncookExtension MaterialUncookExtension { get; set; } = EUncookExtension.dds;
+        [Browsable(false)]
+        public string ArchiveDepot { get; set; }
 
         /// <summary>
         /// String Override to display info in datagrid.
         /// </summary>
         /// <returns>String</returns>
-        public override string ToString() => "Adjust these settings if WithMaterial selected.";
-
-
-    }
-
-    /// <summary>
-    /// WithRig Mesh Export Arguments.
-    /// </summary>
-    public class WithRigMeshArgs
-    {
-        /// <summary>
-        /// Selected Rig for Mesh WithRig Export.
-        /// </summary>
-        [Category("WithRig Settings")]
-        [Display(Name = "Select rig(s)")]
-        [Description("Select rig(s) to export within your mesh.")]
-        public Stream RigStream { get; set; }
+        public override string ToString() => "GLTF/GLB | " + $"Lod filter : {LodFilter.ToString()} | Is Binary : {isGLBinary.ToString()}";
 
         /// <summary>
-        /// String Override to display info in datagrid.
+        /// WithMaterials Mesh Export Arguments.
         /// </summary>
-        /// <returns>String</returns>
-        public override string ToString() => "Adjust these settings if WithRig selected.";
+        public class WithMaterialMeshArgs
+        {
+            /// <summary>
+            /// Uncook Format for material files. (DDS,TGA,PNG Etc)
+            /// </summary>
+            [Category("WithMaterials Settings")]
+            [Display(Name = "Select Export Format")]
+            [Description("Exports textures(dds,png,tga etc) and material helper data with the mesh.")]
+            public EUncookExtension MaterialUncookExtension { get; set; } = EUncookExtension.dds;
 
-    }
-
-    /// <summary>
-    /// MultiMesh Export Arguments
-    /// </summary>
-    public class MultiMeshArgs
-    {
-        /// <summary>
-        /// MultiMesh Mesh List.
-        /// </summary>
-        [Category("MultiMesh Settings")]
-        [Display(Name = "Select additional meshes")]
-        public List<Stream> MultiMeshMeshes { get; set; } = new();
-
-        /// <summary>
-        /// MultiMesh Rig List.
-        /// </summary>
-        [Category("MultiMesh Settings")]
-        [Display(Name = "Select rig(s)")]
-        public List<Stream> MultiMeshRigs { get; set; } = new();
+            /// <summary>
+            /// String Override to display info in datagrid.
+            /// </summary>
+            /// <returns>String</returns>
+            public override string ToString() => "Adjust these settings if WithMaterial selected.";
+        }
 
         /// <summary>
-        /// String Override to display info in datagrid.
+        /// WithRig Mesh Export Arguments.
         /// </summary>
-        /// <returns>String</returns>
-        public override string ToString() => "Adjust these settings if MultiMesh selected.";
+        public class WithRigMeshArgs
+        {
+            /// <summary>
+            /// Selected Rig for Mesh WithRig Export. ALWAYS USE THE FIRST ENTRY IN THE LIST.
+            /// </summary>
+            [Category("WithRig Settings")]
+            [Display(Name = "Select rig(s)")]
+            [Description("Select rig(s) to export within your mesh.")]
+            public List<Stream> RigStream { get; set; }
 
+            /// <summary>
+            /// String Override to display info in datagrid.
+            /// </summary>
+            /// <returns>String</returns>
+            public override string ToString() => "Adjust these settings if WithRig selected.";
+        }
+
+        /// <summary>
+        /// MultiMesh Export Arguments
+        /// </summary>
+        public class MultiMeshArgs
+        {
+            /// <summary>
+            /// MultiMesh Mesh List.
+            /// </summary>
+            [Category("MultiMesh Settings")]
+            [Display(Name = "Select additional meshes")]
+            public List<Stream> MultiMeshMeshes { get; set; } = new();
+
+            /// <summary>
+            /// MultiMesh Rig List.
+            /// </summary>
+            [Category("MultiMesh Settings")]
+            [Display(Name = "Select rig(s)")]
+            public List<Stream> MultiMeshRigs { get; set; } = new();
+
+            /// <summary>
+            /// String Override to display info in datagrid.
+            /// </summary>
+            /// <returns>String</returns>
+            public override string ToString() => "Adjust these settings if MultiMesh selected.";
+        }
     }
 
     /// <summary>
@@ -382,25 +412,34 @@ namespace WolvenKit.Common.Model.Arguments
         [Description("Set the audioformat you want your wem file to be converted to.")]
         public WemExportTypes wemExportType { get; set; } = WemExportTypes.Mp3;
 
+        [Browsable(false)]
+        public string FileName { get; set; }
+
         /// <summary>
         /// String Override to display info in datagrid.
         /// </summary>
         /// <returns>String</returns>
         public override string ToString() => wemExportType.ToString();
-
     }
 
     /// <summary>
     /// Wem Export Types
     /// </summary>
-    public enum WemExportTypes { Wav, Mp3 }
+    public enum WemExportTypes
+    {
+        Wav,
+        Mp3
+    }
 
     /// <summary>
     /// Mesh Export Types
     /// </summary>
-    public enum MeshExportType { Default, WithRig,WithMaterials}
+    public enum MeshExportType
+    {
+        Default,
+        WithRig,
+        WithMaterials
+    }
 
-    #endregion
-
-
+    #endregion export args
 }

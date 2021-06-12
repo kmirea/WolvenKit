@@ -1,13 +1,15 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using WolvenKit.RED4.CR2W.Types;
 using WolvenKit.Common;
 using WolvenKit.Common.DDS;
+using WolvenKit.Common.Extensions;
 using WolvenKit.Common.Model.Arguments;
 using WolvenKit.RED4.CR2W;
 
-namespace CP77.CR2W
+namespace WolvenKit.Modkit.RED4
 {
     /// <summary>
     /// Collection of common modding utilities.
@@ -17,55 +19,159 @@ namespace CP77.CR2W
         /// <summary>
         /// Imports a raw File to a RedEngine file (e.g. .dds to .xbm, .fbx to .mesh)
         /// </summary>
-        /// <param name="rawFile"></param>
+        /// <param name="rawFile">the raw file to be imported</param>
         /// <param name="args"></param>
+        /// <param name="outDir">can be a depotpath, or if null the parent directory of the rawfile</param>
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
-        public CR2WFile Import(FileInfo rawFile, ImportArgs args)
+        public bool Import(
+            FileInfo rawFile,
+            GlobalImportArgs args,
+            DirectoryInfo outDir = null)
         {
             #region checks
-            if (rawFile == null)
+            if (rawFile is null or {Exists: false})
             {
-                return null;
+                return false;
+            }
+            if (rawFile.Directory is { Exists: false })
+            {
+                return false;
+            }
+            if (outDir is not { Exists: true })
+            {
+                outDir = rawFile.Directory;
             }
 
-            if (!rawFile.Exists)
-            {
-                return null;
-            }
-
-            if (rawFile.Directory is {Exists: false})
-            {
-                return null;
-            }
-
-            if (!Enum.GetNames(typeof(ERawFileFormat)).Contains(rawFile.Extension[1..]))
-            {
-                return null;
-            }
-
-            if (!Enum.TryParse(rawFile.Extension, out ERawFileFormat rawFileFormat))
-            {
-                return null;
-            }
-            
             #endregion
 
-            switch (rawFileFormat)
+            var filename = rawFile.Name;
+
+            // check if the file can be directly imported
+            var ext = Path.GetExtension(rawFile.FullName).TrimStart('.');
+            if (!Enum.TryParse(ext, true, out ERawFileFormat extAsEnum))
+            {
+                // only buffers can be rebuilt
+                if (ext != "buffer")
+                {
+                    return false;
+                }
+                // buffers can not be rebuilt on their own
+                if (!args.Get<CommonImportArgs>().Keep)
+                {
+                    return false;
+                }
+
+                // if keep, rebuild
+                // get a list of buffers if the user selected just one
+                var buffername = Path.ChangeExtension(filename.Remove(filename.Length - 7), "").TrimEnd('.');
+                var buffers = rawFile.Directory
+                    .GetFiles($"{buffername}.*.buffer", SearchOption.TopDirectoryOnly);
+
+                var redfile = FindRedFileForBuffer(outDir, filename);
+                if (string.IsNullOrEmpty(redfile))
+                {
+                    return false;
+                }
+
+                using var fileStream = new FileStream(redfile, FileMode.Open, FileAccess.ReadWrite);
+                var r = Rebuild(fileStream, buffers);
+
+                _loggerService.Success($"Succesfully rebuilt {redfile} with raw buffers.");
+
+                return r;
+            }
+
+            // import files
+            switch (extAsEnum)
             {
                 case ERawFileFormat.tga:
                 case ERawFileFormat.dds:
-                    return ImportXbm(rawFile);
+                    // for now only xbm is supported
+                    return ImportXbm(rawFile, outDir, args.Get<XbmImportArgs>());
                 case ERawFileFormat.fbx:
-                    throw new NotImplementedException();
+                case ERawFileFormat.gltf:
+                case ERawFileFormat.glb:
+                    return ImportMesh(rawFile, outDir, args.Get<MeshImportArgs>());
                 default:
-                    throw new ArgumentOutOfRangeException($"Import fbx");
+                    throw new ArgumentOutOfRangeException();
+            }
+
+            static string FindRedFileForBuffer(DirectoryInfo outDir, string bufferPath)
+            {
+                var filename = Path.ChangeExtension(bufferPath.Remove(bufferPath.Length - 7), "").TrimEnd('.');
+                // find redfile in outdir
+                // TODO (this can potentially return multiple files with the same name)
+                var files = outDir.GetFiles($"*{filename}", SearchOption.AllDirectories);
+                if (files.Length > 1)
+                {
+                    // duplicates found, assert something
+                    return "";
+                }
+
+                if (files.Length < 1)
+                {
+                    // no redfile found, skip
+                    return "";
+                }
+
+                var redfile = files.First().FullName;
+                return redfile;
             }
         }
 
-        private CR2WFile ImportXbm(FileInfo rawFile, string textureGroup = null)
+        /// <summary>
+        ///  Imports or rebuilds a folder
+        /// </summary>
+        /// <param name="inDir"></param>
+        /// <param name="outDir"></param>
+        /// <returns></returns>
+        public bool ImportFolder(
+            DirectoryInfo inDir,
+            GlobalImportArgs args,
+            DirectoryInfo outDir = null
+        )
         {
-            var rawExt = rawFile.Extension;
+            #region checks
+
+            if (inDir is not { Exists: true })
+            {
+                return false;
+            }
+            if (outDir is not { Exists: true })
+            {
+                outDir = inDir;
+            }
+
+            #endregion
+
+            // process buffers
+            // buffers need an existing redengine file to rebuild/import
+            if (args.Get<CommonImportArgs>().Keep)
+            {
+                RebuildFolder(inDir, outDir);
+            }
+
+            // process all other raw files
+            var allFiles = inDir.GetFiles("*", SearchOption.AllDirectories).ToList();
+            var rawFilesList = allFiles.Where(_ => _.Extension.ToLower() != ".buffer");
+            foreach (var fi in rawFilesList)
+            {
+                var ext = fi.Extension();
+                if (!Enum.TryParse(ext, true, out ERawFileFormat extAsEnum))
+                {
+                    continue;
+                }
+
+                Import(fi, args, outDir);
+            }
+
+            return true;
+        }
+
+        public bool ImportXbm(FileInfo rawFile, DirectoryInfo outDir, XbmImportArgs args)
+        {
+            var rawExt = rawFile.Extension.TrimStart('.');
             // TODO: do this in a working directory?
             var ddsPath = Path.ChangeExtension(rawFile.FullName, "dds");
             // convert to dds if not already
@@ -76,32 +182,61 @@ namespace CP77.CR2W
                     if (ddsPath.Length > 255)
                     {
                         _loggerService.Error($"{ddsPath} - Path length exceeds 255 chars. Please move the archive to a directory with a shorter path.");
-                        return null;
+                        return false;
                     }
                     TexconvWrapper.Convert(rawFile.Directory.FullName, $"{ddsPath}", EUncookExtension.dds);
                 }
                 catch (Exception)
                 {
                     //TODO: proper exception handling
-                    return null;
+                    return false;
                 }
 
                 if (!File.Exists(ddsPath))
                 {
-                    return null;
+                    return false;
                 }
             }
 
+            if (args.Keep)
+            {
+                var buffer = new FileInfo(ddsPath);
+                var filename = rawFile.Name;
+                var redfile = FindRedFile(outDir, filename);
+
+                if (string.IsNullOrEmpty(redfile))
+                {
+                    _loggerService.Warning($"No existing redfile found to rebuild for {filename}");
+                    return false;
+                }
+
+                using var fileStream = new FileStream(redfile, FileMode.Open, FileAccess.ReadWrite);
+                var result = Rebuild(fileStream, new List<FileInfo>() {buffer});
+
+                if (result)
+                {
+                    _loggerService.Success($"Rebuilt {redfile} with buffers");
+                }
+                else
+                {
+                    _loggerService.Error($"Failed to rebuild {redfile} with buffers");
+                }
+
+                return result;
+            }
+            else
+            {
+                _loggerService.Warning($"{rawFile.Name} - Direct xbm importing is not implemented");
+                return false;
+            }
+
+
+
             // read dds metadata
+#pragma warning disable 162
             var metadata = DDSUtils.ReadHeader(ddsPath);
             var width = metadata.Width;
             var height = metadata.Height;
-
-
-
-
-
-
 
             // create cr2wfile
             var cr2w = new CR2WFile();
@@ -132,6 +267,7 @@ namespace CP77.CR2W
             // update cr2w headers
 
             throw new NotImplementedException();
+#pragma warning restore 162
 
 
             #region local functions
@@ -139,40 +275,32 @@ namespace CP77.CR2W
             void SetTextureGroupSetup()
             {
                 // first check the user-texture group
-                if (!string.IsNullOrEmpty(textureGroup))
+                var (compression, rawformat, flags) = CommonFunctions.GetRedFormatsFromTextureGroup(args.TextureGroup);
+                xbm.Setup.Group = new CEnum<Enums.GpuWrapApieTextureGroup>(cr2w, xbm, "group")
                 {
-                    if (Enum.TryParse(textureGroup, out Enums.GpuWrapApieTextureGroup eTextureGroup))
+                    IsSerialized = true,
+                    Value = args.TextureGroup
+                };
+                if (flags is CommonFunctions.ETexGroupFlags.Both or CommonFunctions.ETexGroupFlags.CompressionOnly)
+                {
+                    xbm.Setup.Compression = new CEnum<Enums.ETextureCompression>(cr2w, xbm, "setup")
                     {
-                        var (compression, rawformat, flags) = CommonFunctions.GetRedFormatsFromTextureGroup(eTextureGroup);
-                        xbm.Setup.Group = new CEnum<Enums.GpuWrapApieTextureGroup>(cr2w, xbm, "group")
-                        {
-                            IsSerialized = true,
-                            Value = eTextureGroup
-                        };
-                        if (flags is CommonFunctions.ETexGroupFlags.Both or CommonFunctions.ETexGroupFlags.CompressionOnly)
-                        {
-                            xbm.Setup.Compression = new CEnum<Enums.ETextureCompression>(cr2w, xbm, "setup")
-                            {
-                                IsSerialized = true,
-                                Value = compression
-                            };
-                        }
+                        IsSerialized = true,
+                        Value = compression
+                    };
+                }
 
-                        if (flags is CommonFunctions.ETexGroupFlags.Both or CommonFunctions.ETexGroupFlags.RawFormatOnly)
-                        {
-                            xbm.Setup.RawFormat = new CEnum<Enums.ETextureRawFormat>(cr2w, xbm, "rawFormat")
-                            {
-                                IsSerialized = true,
-                                Value = rawformat
-                            };
-                        }
-
-                        return;
-                    }
+                if (flags is CommonFunctions.ETexGroupFlags.Both or CommonFunctions.ETexGroupFlags.RawFormatOnly)
+                {
+                    xbm.Setup.RawFormat = new CEnum<Enums.ETextureRawFormat>(cr2w, xbm, "rawFormat")
+                    {
+                        IsSerialized = true,
+                        Value = rawformat
+                    };
                 }
 
                 // if that didn't work, interpret the filename suffix
-                if (string.IsNullOrEmpty(textureGroup) && rawFile.Name.Contains('_'))
+                if (rawFile.Name.Contains('_'))
                 {
                     // try interpret suffix
                     switch (rawFile.Name.Split('_').Last())
@@ -199,6 +327,89 @@ namespace CP77.CR2W
 
             #endregion
 
+        }
+
+        private static ECookedFileFormat FromRawExtension(ERawFileFormat rawextension) =>
+            rawextension switch
+            {
+                ERawFileFormat.tga => ECookedFileFormat.xbm,
+                ERawFileFormat.dds => ECookedFileFormat.xbm,
+                ERawFileFormat.fbx => ECookedFileFormat.mesh,
+                ERawFileFormat.gltf => ECookedFileFormat.mesh,
+                ERawFileFormat.glb => ECookedFileFormat.mesh,
+                _ => throw new ArgumentOutOfRangeException(nameof(rawextension), rawextension, null)
+            };
+
+        private static string FindRedFile(DirectoryInfo outDir, string rawfilename)
+        {
+            var ext = Path.GetExtension(rawfilename).TrimStart('.');
+            if (!Enum.TryParse(ext, true, out ERawFileFormat extAsEnum))
+            {
+                return "";
+            }
+
+            var filename = Path.ChangeExtension(rawfilename, FromRawExtension(extAsEnum).ToString());
+
+
+            // find redfile in outdir
+            // TODO (this can potentially return multiple files with the same name)
+            var files = outDir.GetFiles($"*{filename}", SearchOption.AllDirectories);
+            if (files.Length > 1)
+            {
+                // duplicates found, assert something
+                return "";
+            }
+
+            if (files.Length < 1)
+            {
+                // no redfile found, skip
+                return "";
+            }
+
+            var redfile = files.First().FullName;
+            return redfile;
+        }
+        private bool ImportMesh(FileInfo rawFile, DirectoryInfo outDir, MeshImportArgs args)
+        {
+            if (args.Keep)
+            {
+                var filename = rawFile.Name;
+                var redfile = FindRedFile(outDir, filename);
+                var redfileName = Path.GetFileName(redfile);
+
+                if (string.IsNullOrEmpty(redfile))
+                {
+                    _loggerService.Warning($"No existing redfile found to rebuild for {filename}");
+                    return false;
+                }
+
+                using var redFs = new FileStream(redfile, FileMode.Open, FileAccess.ReadWrite);
+                try
+                {
+                    var result = _meshimporter.Import(rawFile, redFs);
+
+                    if (result)
+                    {
+                        _loggerService.Success($"Rebuilt {redfileName} with buffers");
+                    }
+                    else
+                    {
+                        _loggerService.Error($"Failed to rebuild {redfileName} with buffers");
+                    }
+                    return result;
+                }
+                catch (Exception e)
+                {
+                    _loggerService.Error($"Unexpected error occured while importing {redfileName}: {e.Message}");
+                    return false;
+                }
+
+
+            }
+
+
+            _loggerService.Warning($"{rawFile.Name} - Direct mesh importing is not implemented");
+            return false;
         }
     }
 }

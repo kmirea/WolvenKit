@@ -9,7 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using SharpGLTF.Schema2;
 using WolvenKit.Modkit.RED4.MeshFile;
-using WolvenKit.Modkit.RED4.Materials.MaterialTypes;
+using WolvenKit.Modkit.RED4.Materials.Types;
 using WolvenKit.Common.DDS;
 using WolvenKit.RED4.CR2W.Archive;
 using WolvenKit.Common.FNV1A;
@@ -21,7 +21,7 @@ using WolvenKit.Common.Model.Arguments;
 using WolvenKit.Common.Services;
 using WolvenKit.Modkit.RED4;
 
-namespace CP77.CR2W
+namespace WolvenKit.Modkit.RED4
 {
     /// <summary>
     /// Collection of common modding utilities.
@@ -103,6 +103,10 @@ namespace CP77.CR2W
             {
                 var tempmodel = (new SharpGLTF.Scenes.SceneBuilder()).ToGltf2();
                 DirectoryInfo dir = new DirectoryInfo(outfile.DirectoryName + "\\" + Path.GetFileNameWithoutExtension(outfile.FullName) + "_Textures\\");
+                if (!dir.Exists)
+                {
+                    Directory.CreateDirectory(dir.FullName);
+                }
                 ParseMaterialsUsingArchives(meshStream, ref tempmodel, dir, archives, eUncookExtension);
                 if (isGLBinary)
                     tempmodel.SaveGLB(outfile.FullName);
@@ -136,7 +140,10 @@ namespace CP77.CR2W
             ModelRoot model = MeshTools.RawRigidMeshesToGLTF(expMeshes);
 
             DirectoryInfo outDir = new DirectoryInfo(outfile.DirectoryName + "\\" + Path.GetFileNameWithoutExtension(outfile.FullName) + "_Textures\\");
-            Directory.CreateDirectory(outDir.FullName);
+            if (!outDir.Exists)
+            {
+                Directory.CreateDirectory(outDir.FullName);
+            }
 
             ParseMaterialsUsingArchives(meshStream, ref model, outDir, archives, eUncookExtension);
 
@@ -400,9 +407,6 @@ namespace CP77.CR2W
                     }
             }
 
-            try
-            {
-
                 List<RawMaterial> RawMaterials = new List<RawMaterial>();
                 for (int i = 0; i < materialEntries.Count; i++)
                 {
@@ -445,9 +449,6 @@ namespace CP77.CR2W
                         File.WriteAllText(outDir.FullName + "Material.json", JsonContent.Serialize(obj).ToJson());
                     }
                 }
-
-            }
-            catch { }
 
             File.WriteAllLines(outDir.FullName + "Textures List.txt", TexturesList);
 
@@ -580,9 +581,6 @@ namespace CP77.CR2W
                 }
             }
 
-            try
-            {
-
                 List<RawMaterial> RawMaterials = new List<RawMaterial>();
                 for (int i = 0; i < materialEntries.Count; i++)
                 {
@@ -626,8 +624,6 @@ namespace CP77.CR2W
                     }
                 }
 
-            }
-            catch { }
             File.WriteAllLines(outDir.FullName + "TexturesList.txt", TexturesList);
 
             string ext = "*.dds";
@@ -656,43 +652,21 @@ namespace CP77.CR2W
             RawMaterial rawMaterial = new RawMaterial();
 
             rawMaterial.Name = Name;
-            try
-            {
+
                 rawMaterial.BaseMaterial = cMaterialInstance.BaseMaterial.DepotPath;
+                rawMaterial.MaterialInstanceData = new MaterialInstanceData(cMaterialInstance);
 
                 if (Path.GetFileNameWithoutExtension(cMaterialInstance.BaseMaterial.DepotPath) == "multilayered")
-                {
                     rawMaterial.MaterialType = MaterialType.MultiLayered;
 
-                    MultiLayered multiLayered = new MultiLayered(cMaterialInstance);
-                    rawMaterial.MultiLayered = multiLayered;
-
-                }
                 if (Path.GetFileNameWithoutExtension(cMaterialInstance.BaseMaterial.DepotPath) == "mesh_decal")
-                {
                     rawMaterial.MaterialType = MaterialType.MeshDecal;
 
-                    MeshDecal MeshDecal = new MeshDecal(cMaterialInstance);
-                    rawMaterial.MeshDecal = MeshDecal;
-
-                }
                 if (cMaterialInstance.BaseMaterial.DepotPath.Contains("skin"))
-                {
                     rawMaterial.MaterialType = MaterialType.HumanSkin;
 
-                    HumanSkin HumanSkin = new HumanSkin(cMaterialInstance);
-                    rawMaterial.HumanSkin = HumanSkin;
-                }
                 if (Path.GetFileNameWithoutExtension(cMaterialInstance.BaseMaterial.DepotPath) == "metal_base")
-                {
                     rawMaterial.MaterialType = MaterialType.MetalBase;
-
-                    MetalBase metalBase = new MetalBase(cMaterialInstance);
-                    rawMaterial.MetalBase = metalBase;
-
-                }
-            }
-            catch { }
 
             return rawMaterial;
         }
@@ -874,8 +848,8 @@ namespace CP77.CR2W
                 ExtractAll(ar, MaterialRepoDir, "*.mltemplate");
                 ExtractAll(ar, MaterialRepoDir, "*.texarray");
 
-                UncookAll(ar, MaterialRepoDir, exportArgs,  "*.xbm", "" );
-                UncookAll(ar, MaterialRepoDir, exportArgs, "*.mlmask", "");
+                UncookAll(ar, MaterialRepoDir, exportArgs, false, "*.xbm", "" );
+                UncookAll(ar, MaterialRepoDir, exportArgs, false, "*.mlmask", "");
                 // try catch the decode in mlmask.cs for now
             }
         }
