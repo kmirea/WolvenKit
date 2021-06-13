@@ -372,9 +372,9 @@ namespace WolvenKit.RED4.CR2W
 
             // Read Value
             var parsedvar = parent.GetPropertyByREDName(varname);
-            if (parsedvar.REDType != typename)
+            if (parsedvar == null || parsedvar.REDType != typename)
             {
-                throw new TypeMismatchException(typename, parsedvar.REDType);
+                throw new MissingRTTIException(varname);
             }
 
             // The "size" variable read is something a bit strange : it takes itself into account.
@@ -869,6 +869,9 @@ namespace WolvenKit.RED4.CR2W
 
             // Write headers again with fixed offsets
             WriteHeader(file);
+
+            // scroll to end after the data chunks
+            file.Seek(0, SeekOrigin.End);
 
             if (AdditionalCr2WFileBytes != null)
             {

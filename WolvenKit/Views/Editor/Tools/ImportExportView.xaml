@@ -11,7 +11,7 @@
     xmlns:local="clr-namespace:WolvenKit"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:po="http://schemas.microsoft.com/winfx/2006/xaml/presentation/options"
-    xmlns:syncfusion="http://schemas.syncfusion.com/wpf" 
+    xmlns:syncfusion="http://schemas.syncfusion.com/wpf"
     xmlns:system="clr-namespace:System;assembly=System.Runtime"
     d:DataContext="{d:DesignInstance Type=editor:ImportExportViewModel}"
     mc:Ignorable="d">
@@ -342,6 +342,7 @@
                     </StackPanel>
 
                     <CheckBox
+                        x:Name="ApplyToAllCheckbox"
                         Margin="3,0,0,0"
                         HorizontalAlignment="Left"
                         VerticalAlignment="Top"
@@ -421,84 +422,131 @@
             Background="{DynamicResource ContentBackgroundAlt}"
             Visibility="Collapsed">
 
-            <syncfusion:TabControlExt>
-                <syncfusion:TabItemExt Header="Add Files">
+
+            <Grid>
+
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="25" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="1" />
+                    <ColumnDefinition Width="*" />
+
+                </Grid.ColumnDefinitions>
+
+
+
+
+                <!--  Titles  -->
+                <TextBlock
+                    Grid.Column="0"
+                    Padding="2"
+                    Background="{DynamicResource MahApps.Brushes.Accent3}"
+                    Text="Select File(s)"
+                    TextAlignment="Center" />
+                <TextBlock
+                    Grid.Column="2"
+                    Padding="2"
+                    Background="{DynamicResource MahApps.Brushes.Accent3}"
+                    Text=" Selected File(s)"
+                    TextAlignment="Center" />
+
+
+                <!--  Divider  -->
+                <Grid
+                    Grid.Row="1"
+                    Grid.Column="1"
+                    Background="{DynamicResource ContentBackgroundAlt2}" />
+
+
+
+                <!--  Selection Grid  -->
+                <Grid
+                    Grid.Row="1"
+                    Grid.Column="0"
+                    Background="{DynamicResource ContentBackgroundAlt2}">
                     <Grid>
                         <syncfusion:SfDataGrid x:Name="FileSelectionDataGrid" Margin="0,0,0,40" />
-                        <Border Margin="5" VerticalAlignment="Bottom">
+                        <Border
+                            Margin="0"
+                            Padding="5"
+                            VerticalAlignment="Bottom"
+                            Background="{DynamicResource ContentBackground}"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="1">
                             <Grid>
-                                <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
-                                    <!--  Cancel Button  -->
-                                    <Button
-                                        Height="30"
-                                        Margin="5,0,5,0"
-                                        Padding="5"
-                                        Click="CancelSelectingClick"
-                                        FontSize="12"
-                                        Style="{DynamicResource ButtonDefault}">
-                                        <StackPanel Orientation="Horizontal">
+                                <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
 
-                                            <TextBlock Text="Cancel" />
-                                        </StackPanel>
-                                    </Button>
                                     <!--  Add Button  -->
                                     <Button
                                         Height="30"
-                                        Margin="5,0,5,0"
+                                        Margin="0,0,5,0"
                                         Padding="5"
+                                        Background="{DynamicResource ContentBackgroundAlt}"
                                         FontSize="12"
-                                        Style="{DynamicResource ButtonDefault}">
+                                        Style="{DynamicResource MahApps.Styles.Button.ToolBar}">
                                         <StackPanel Orientation="Horizontal">
+                                            <iconPacks:PackIconPixelartIcons Kind="AddBoxMultiple" />
 
-                                            <TextBlock Text="Add selected file" />
+                                            <TextBlock Text="Add selected file(s)" />
                                         </StackPanel>
                                     </Button>
-                                    <!--  Confirm Button  -->
-                                    <Button
-                                        Height="30"
-                                        Margin="5,0,5,0"
-                                        Padding="5"
-                                        FontSize="12"
-                                        Style="{DynamicResource ButtonDefault}">
-                                        <StackPanel Orientation="Horizontal">
 
-                                            <TextBlock Text="Confirm" />
-                                        </StackPanel>
-                                    </Button>
                                 </StackPanel>
                             </Grid>
                         </Border>
                     </Grid>
-                </syncfusion:TabItemExt>
-                <syncfusion:TabItemExt Header="Selected Files">
+                </Grid>
+
+                <!--  Selected Grid  -->
+                <Grid
+                    Grid.Row="1"
+                    Grid.Column="2"
+                    Background="{DynamicResource ContentBackgroundAlt2}">
                     <Grid>
                         <syncfusion:SfDataGrid x:Name="SelectedFilesGrid" Margin="0,0,0,40" />
-                        <Border Margin="5" VerticalAlignment="Bottom">
+                        <Border
+                            Margin="0"
+                            Padding="5"
+                            VerticalAlignment="Bottom"
+                            Background="{DynamicResource ContentBackground}"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="1">
+
                             <Grid>
-                                <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+
+                                <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
+
+                                    <!--  Renove Button  -->
+                                    <Button
+                                        Height="30"
+                                        Margin="0,0,5,0"
+                                        Padding="5"
+                                        Background="{DynamicResource ContentBackgroundAlt}"
+                                        FontSize="12"
+                                        Style="{DynamicResource MahApps.Styles.Button.ToolBar}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <iconPacks:PackIconPixelartIcons Kind="RemoveBoxMultiple" />
+
+                                            <TextBlock Text="Remove selected file(s)" />
+                                        </StackPanel>
+                                    </Button>
+
                                     <!--  Cancel Button  -->
                                     <Button
                                         Height="30"
                                         Margin="5,0,5,0"
                                         Padding="5"
+                                        Background="{DynamicResource ContentBackgroundAlt}"
                                         Click="CancelSelectingClick"
                                         FontSize="12"
-                                        Style="{DynamicResource ButtonDefault}">
+                                        Style="{DynamicResource MahApps.Styles.Button.ToolBar}">
                                         <StackPanel Orientation="Horizontal">
 
                                             <TextBlock Text="Cancel" />
-                                        </StackPanel>
-                                    </Button>
-                                    <!--  Renove Button  -->
-                                    <Button
-                                        Height="30"
-                                        Margin="5,0,5,0"
-                                        Padding="5"
-                                        FontSize="12"
-                                        Style="{DynamicResource ButtonDefault}">
-                                        <StackPanel Orientation="Horizontal">
-
-                                            <TextBlock Text="Remove selected file" />
                                         </StackPanel>
                                     </Button>
                                     <!--  Confirm Button  -->
@@ -506,8 +554,9 @@
                                         Height="30"
                                         Margin="5,0,5,0"
                                         Padding="5"
+                                        Background="{DynamicResource ContentBackgroundAlt}"
                                         FontSize="12"
-                                        Style="{DynamicResource ButtonDefault}">
+                                        Style="{DynamicResource MahApps.Styles.Button.ToolBar}">
                                         <StackPanel Orientation="Horizontal">
 
                                             <TextBlock Text="Confirm" />
@@ -517,8 +566,42 @@
                             </Grid>
                         </Border>
                     </Grid>
-                </syncfusion:TabItemExt>
-            </syncfusion:TabControlExt>
+                </Grid>
+                <Grid
+                    Grid.RowSpan="2"
+                    Grid.ColumnSpan="4"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Background="{DynamicResource ContentBackground}">
+                    <StackPanel>
+                        <!--  Remove Button <  -->
+                        <Button
+                            Height="30"
+                            Padding="5"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            FontSize="12"
+                            Style="{DynamicResource MahApps.Styles.Button.ToolBar}">
+                            <StackPanel Orientation="Horizontal">
+                                <iconPacks:PackIconMaterial Kind="TransferLeft" />
+
+                            </StackPanel>
+                        </Button>
+                        <!--  Add Button >  -->
+                        <Button
+                            Height="30"
+                            Padding="5"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            FontSize="12"
+                            Style="{DynamicResource MahApps.Styles.Button.ToolBar}">
+                            <StackPanel Orientation="Horizontal">
+                                <iconPacks:PackIconMaterial Kind="TransferRight" />
+
+                            </StackPanel>
+                        </Button>
+
+                    </StackPanel>
+                </Grid>
+            </Grid>
         </Grid>
 
         <!--  file succesfully/error adding/added window.  -->

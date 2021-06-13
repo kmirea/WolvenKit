@@ -4,8 +4,10 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using Newtonsoft.Json;
 using WolvenKit.CLI;
+using WolvenKit.Common;
 using WolvenKit.Common.Extensions;
 using WolvenKit.Common.Tools;
 using WolvenKit.Interfaces.Core;
@@ -79,7 +81,12 @@ namespace CP77Tools.Tasks
 
             if (deserialize)
             {
-                finalmatches = fileInfos.Where(_ => _.Extension == $".{format.ToString()}");
+                finalmatches = fileInfos.Where(_ => _.Extension == $".{format}");
+            }
+
+            if (serialize)
+            {
+                finalmatches = fileInfos.Where(_ => Enum.GetNames(typeof(ERedExtension)).Contains(_.TrimmedExtension()));
             }
 
             // check search pattern then regex
@@ -103,11 +110,10 @@ namespace CP77Tools.Tasks
             var finalMatchesList = finalmatches.ToList();
             _loggerService.Info($"Found {finalMatchesList.Count} files to process.");
 
-            Thread.Sleep(1000);
             int progress = 0;
 
-            foreach (var fileInfo in finalMatchesList)
-            //Parallel.ForEach(finalMatchesList, fileInfo =>
+            //foreach (var fileInfo in finalMatchesList)
+            Parallel.ForEach(finalMatchesList, fileInfo =>
             {
                 var outputDirInfo = string.IsNullOrEmpty(outputDirectory)
                     ? fileInfo.Directory
@@ -125,12 +131,13 @@ namespace CP77Tools.Tasks
                     var cr2w = _wolvenkitFileService.TryReadCr2WFile(fs);
                     if (cr2w == null)
                     {
+                        _loggerService.Error($"Could not parse {infile}.");
                         return;
                     }
 
                     cr2w.FileName = infile;
 
-                    string json = "";
+                    var json = "";
                     var dto = new Red4W2rcFileDto(cr2w);
                     json =
                         JsonConvert.SerializeObject(
@@ -196,8 +203,8 @@ namespace CP77Tools.Tasks
                 }
 
                 Interlocked.Increment(ref progress);
-                //});
-            }
+            });
+            //}
 
             watch.Stop();
             _loggerService.Info($"Elapsed time: {watch.ElapsedMilliseconds.ToString()}ms.");
