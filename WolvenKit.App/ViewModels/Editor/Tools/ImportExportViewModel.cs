@@ -19,7 +19,6 @@ using WolvenKit.Functionality.Controllers;
 using WolvenKit.Functionality.Services;
 using WolvenKit.RED4.CR2W.Archive;
 using ModTools = WolvenKit.Modkit.RED4.ModTools;
-using Orchestra.Services;
 using WolvenKit.Common;
 using WolvenKit.Common.Model;
 using System.Collections.Generic;
