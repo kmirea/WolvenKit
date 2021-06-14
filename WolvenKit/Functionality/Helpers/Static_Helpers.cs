@@ -10,7 +10,7 @@ namespace WolvenKit.Functionality.Helpers
     public static class StaticReferences
     {
         public static PropertiesView GlobalPropertiesView;
-        public static ShellWindow GlobalShell;
+        public static Catel.Windows.Window GlobalShell;
         public static StatusBarViewModel GlobalStatusBar;
         public static MainView MainView;
         public static RibbonView RibbonViewInstance;

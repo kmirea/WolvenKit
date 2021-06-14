@@ -72,7 +72,7 @@ namespace WolvenKit
             Initializations.InitializeThemeHelper();
 
             StaticReferences.Logger.Info("Initializing Shell");
-            await Initializations.InitializeShell();
+            //await Initializations.InitializeShell();
             Helpers.ShowFirstTimeSetup();
 
             StaticReferences.Logger.Info("Initializing Discord RPC API");
@@ -140,6 +140,16 @@ namespace WolvenKit
                     }
                 }
             });
+
+            // Show window
+            var init = serviceLocator.ResolveType<ApplicationInitializationService>();
+            await init.InitializeBeforeCreatingShellAsync();
+
+            var uiVisualizerService = serviceLocator.ResolveType<Catel.Services.IUIVisualizerService>();
+            var baseViewModel = serviceLocator.RegisterTypeAndInstantiate<ViewModels.HomePage.BaseViewModel>();
+            var ribbonViewModel = serviceLocator.RegisterTypeAndInstantiate<ViewModels.Shell.RibbonViewModel>();
+            ViewModels.Shell.RibbonViewModel.GlobalRibbonVM = ribbonViewModel;
+            _ = uiVisualizerService.ShowAsync(baseViewModel);
         }
 
         // Sets the VideTool as current main window on demand.

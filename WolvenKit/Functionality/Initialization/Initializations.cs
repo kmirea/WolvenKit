@@ -224,7 +224,7 @@ namespace WolvenKit.Functionality.Initialization
 
                 await shellService.CreateAsync<ShellWindow>();
                 var sh = (ShellWindow)shellService.Shell;
-                StaticReferences.GlobalShell = sh;
+                //StaticReferences.GlobalShell = sh;
                 sh.MinWidth = 1;
                 sh.MinHeight = 1;
                 sh.WindowState = WindowState.Maximized;
