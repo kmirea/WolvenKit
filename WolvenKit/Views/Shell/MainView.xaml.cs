@@ -5,6 +5,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Input;
 using Catel.Data;
+using Catel.IoC;
 using ReactiveUI;
 using WolvenKit.Functionality.Commands;
 using WolvenKit.Functionality.Helpers;
@@ -25,6 +26,8 @@ namespace WolvenKit.Views.Shell
         public MainView()
         {
             InitializeComponent();
+            ViewModel = ServiceLocator.Default.ResolveType<WorkSpaceViewModel>();
+            DataContext = ViewModel;
 
             StaticReferences.MainView = this;
         }
