@@ -334,6 +334,7 @@
     <PackageReference Include="Feather.Controls" Version="1.0.3" />
     <PackageReference Include="Feather.Core" Version="1.0.0" />
     <PackageReference Include="FFME.Windows" Version="4.3.340" />
+    <PackageReference Include="Fluent.Ribbon" Version="8.0.3" />
     <PackageReference Include="Fody" Version="6.5.1" PrivateAssets="all" />
     <PackageReference Include="CsvHelper" Version="27.0.4" />
     <PackageReference Include="Dirkster.MLib" Version="1.3.1.2" />
@@ -353,11 +354,7 @@
     <PackageReference Include="Obsolete.Fody" Version="5.2.1" PrivateAssets="all" />
     <PackageReference Include="Octokit" Version="0.50.0" />
     <PackageReference Include="Open.ChannelExtensions" Version="3.5.0" />
-    <PackageReference Include="Orc.CommandLine" Version="4.1.1" />
-    <PackageReference Include="Orc.CsvTextEditor" Version="4.1.0" />
     <PackageReference Include="Orc.LogViewer" Version="4.1.0" />
-    <PackageReference Include="Orc.Squirrel" Version="4.1.0" />
-    <PackageReference Include="Orc.Squirrel.Xaml" Version="4.1.0" />
     <PackageReference Include="Panuon.UI.Silver" Version="1.1.3.4" />
     <PackageReference Include="Pathoschild.FluentNexus" Version="1.0.2" />
     <PackageReference Include="Pfim" Version="0.10.0" />
@@ -387,11 +384,8 @@
     <PackageReference Include="System.Security.Permissions" Version="5.0.0" />
     <PackageReference Include="System.Windows.Interactivity.WPF" Version="2.0.20525" NoWarn="NU1701" />
     <PackageReference Include="taglib-sharp-netstandard2.0" Version="2.1.0" />
-    <PackageReference Include="WolvenKit.AvalonDock.Themes.VS2013" Version="4.50.4" />
     <PackageReference Include="WolvenKit.AvalonEdit" Version="6.1.1" />
     <PackageReference Include="WolvenKit.HandyControl" Version="3.2.0" />
-    <PackageReference Include="WolvenKit.Orchestra.Core" Version="4.2.3" />
-    <PackageReference Include="WolvenKit.Shell.Ribbon.FluentMahApps" Version="4.2.6" />
     <PackageReference Include="WolvenKit.WPFSoundVisualizationLibNet5" Version="1.0.1" />
     <PackageReference Include="WpfAnalyzers" Version="3.5.4" PrivateAssets="all">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
@@ -401,9 +395,6 @@
 
   <ItemGroup>
     <Content Include="Config\__xbmdump_3768555366.csv">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Config\AvalonDock.Layout.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="Resources\Old\Images\git.png">
@@ -1807,5 +1798,8 @@
     <Page Update="Views\Templates\HandleTemplateView.xaml">
       <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
     </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Functionality\Services\" />
   </ItemGroup>
 </Project>

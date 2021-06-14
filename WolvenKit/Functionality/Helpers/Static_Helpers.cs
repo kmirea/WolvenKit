@@ -1,6 +1,5 @@
 using Catel.Logging;
 using Octokit;
-using Orchestra.Views;
 using WolvenKit.ViewModels.Shell;
 using WolvenKit.Views.Editor;
 using WolvenKit.Views.Shell;

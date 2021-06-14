@@ -13,7 +13,6 @@ using Catel.IoC;
 using Catel.MVVM;
 using Catel.Services;
 using DynamicData;
-using Orc.FileSystem;
 using ReactiveUI;
 using WolvenKit.Common;
 using WolvenKit.Common.Model;
@@ -47,8 +46,6 @@ namespace WolvenKit.ViewModels.Editor
         private readonly IMessageService _messageService;
         private readonly IProjectManager _projectManager;
         private readonly IWatcherService _watcherService;
-        private readonly IFileService _fileService;
-        private readonly IDirectoryService _directoryService;
         private readonly Tw3Controller _tw3Controller;
 
         private EditorProject ActiveMod => _projectManager.ActiveProject;
@@ -73,8 +70,6 @@ namespace WolvenKit.ViewModels.Editor
             IMessageService messageService,
             IWatcherService watcherService,
             ICommandManager commandManager,
-            IDirectoryService directoryService,
-            IFileService fileService,
             Tw3Controller tw3Controller
             ) : base(ToolTitle)
         {
@@ -83,8 +78,6 @@ namespace WolvenKit.ViewModels.Editor
             Argument.IsNotNull(() => loggerService);
             Argument.IsNotNull(() => commandManager);
             Argument.IsNotNull(() => watcherService);
-            Argument.IsNotNull(() => directoryService);
-            Argument.IsNotNull(() => fileService);
             Argument.IsNotNull(() => tw3Controller);
 
             _projectManager = projectManager;
@@ -92,8 +85,6 @@ namespace WolvenKit.ViewModels.Editor
             _messageService = messageService;
             _commandManager = commandManager;
             _watcherService = watcherService;
-            _directoryService = directoryService;
-            _fileService = fileService;
             _tw3Controller = tw3Controller;
 
             SetupCommands();
@@ -261,17 +252,15 @@ namespace WolvenKit.ViewModels.Editor
 
                 if (SelectedItem.IsDirectory)
                 {
-                    _directoryService.Delete(fullpath);
-                    //Microsoft.VisualBasic.FileIO.FileSystem.DeleteDirectory(fullpath
-                    //    , Microsoft.VisualBasic.FileIO.UIOption.OnlyErrorDialogs
-                    //    , Microsoft.VisualBasic.FileIO.RecycleOption.SendToRecycleBin);
+                    Microsoft.VisualBasic.FileIO.FileSystem.DeleteDirectory(fullpath
+                        , Microsoft.VisualBasic.FileIO.UIOption.OnlyErrorDialogs
+                        , Microsoft.VisualBasic.FileIO.RecycleOption.SendToRecycleBin);
                 }
                 else
                 {
-                    _fileService.Delete(fullpath);
-                    //Microsoft.VisualBasic.FileIO.FileSystem.DeleteFile(fullpath
-                    //    , Microsoft.VisualBasic.FileIO.UIOption.OnlyErrorDialogs
-                    //    , Microsoft.VisualBasic.FileIO.RecycleOption.SendToRecycleBin);
+                    Microsoft.VisualBasic.FileIO.FileSystem.DeleteFile(fullpath
+                        , Microsoft.VisualBasic.FileIO.UIOption.OnlyErrorDialogs
+                        , Microsoft.VisualBasic.FileIO.RecycleOption.SendToRecycleBin);
                 }
             }
             catch (Exception)

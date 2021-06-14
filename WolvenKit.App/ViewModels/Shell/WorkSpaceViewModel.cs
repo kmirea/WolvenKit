@@ -16,6 +16,7 @@ using Catel.Messaging;
 using Catel.MVVM;
 using Catel.Services;
 using Microsoft.Win32;
+using ReactiveUI;
 using WolvenKit.Common;
 using WolvenKit.Common.Exceptions;
 using WolvenKit.Common.Services;
@@ -149,16 +150,6 @@ namespace WolvenKit.ViewModels.Shell
         #endregion constructors
 
         #region init
-
-        protected override async Task InitializeAsync()
-        {
-            await base.InitializeAsync();
-        }
-
-        protected override Task OnClosingAsync()
-        {
-            return base.OnClosingAsync();
-        }
 
         private static void OnToolViewModelPropertyChanged(object sender, PropertyChangedEventArgs args)
         {

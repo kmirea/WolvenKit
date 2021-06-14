@@ -9,7 +9,6 @@ using Catel.MVVM;
 using Catel.Services;
 using Orc.FileSystem;
 using WolvenKit.Functionality.Services;
-using Orchestra.Services;
 using WolvenKit.Common.Services;
 using WolvenKit.Functionality.Controllers;
 using WolvenKit.Functionality.WKitGlobal;
@@ -164,10 +163,11 @@ namespace WolvenKit.Functionality.Commands
                             break;
                     }
 
+                    //TODO:SHELL
                     //var btn = StaticReferences.GlobalShell.FindName("ProjectNameDisplay") as System.Windows.Controls.Button;
                     //btn?.SetCurrentValue(ContentControl.ContentProperty, Path.GetFileNameWithoutExtension(location));
 
-                    StaticReferencesVM.GlobalStatusBar.CurrentProject = Path.GetFileNameWithoutExtension(location);
+                    //StaticReferencesVM.GlobalStatusBar.CurrentProject = Path.GetFileNameWithoutExtension(location);
                 }
 
             }

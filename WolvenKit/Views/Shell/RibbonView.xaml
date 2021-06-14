@@ -113,7 +113,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
-        <fluent:Ribbon
+        <syncfusion:Ribbon
          x:Name="ribbon"
          Grid.Row="0"
          Margin="0,0,0,0"
@@ -121,7 +121,7 @@
          Visibility="Collapsed"
          >
             <!--  StartScreen  -->
-            <fluent:Ribbon.StartScreen>
+            <!--<syncfusion:Ribbon.StartScreen>
                 <fluent:StartScreen
                  x:Name="startScreen"
                  IsOpen="{Binding BackstageIsOpen}"
@@ -129,8 +129,8 @@
                  >
                     <HomeView:HomePageView x:Name="HMPV" />
                 </fluent:StartScreen>
-            </fluent:Ribbon.StartScreen>
-        </fluent:Ribbon>
+            </syncfusion:Ribbon.StartScreen>-->
+        </syncfusion:Ribbon>
 
         <syncfusion:Ribbon
          x:Name="_ribbon"

@@ -9,9 +9,6 @@ using Catel.MVVM;
 using FFmpeg.AutoGen;
 using Microsoft.Web.WebView2.Core;
 using Octokit;
-using Orc.Squirrel;
-using Orchestra.Services;
-using Orchestra.Views;
 using Syncfusion.SfSkinManager;
 using Syncfusion.Themes.MaterialDark.WPF;
 using Unosquare.FFME;
@@ -109,7 +106,7 @@ namespace WolvenKit.Functionality.Initialization
         }
 
         // Initialize Shell
-        public static async Task InitializeShell()
+        /*public static async Task InitializeShell()
         {
             if (!WolvenDBG.EnableTheming)
             {
@@ -121,16 +118,15 @@ namespace WolvenKit.Functionality.Initialization
                 await ShellInnerInit();
                 ThemeInnerInit();
             }
-        }
+        }*/
 
         // Initialize MVVM (Catel)
-        public static async Task InitializeMVVM()
+        public static void InitializeMVVM()
         {
             try
             {
                 var uri = new Uri("pack://application:,,,/WolvenKit.Resources;component/Resources/Media/Images/git.png");
 
-                await SquirrelHelper.HandleSquirrelAutomaticallyAsync();
 
                 // Register Viewmodels & Views
                 var viewModelLocator = ServiceLocator.Default.ResolveType<IViewModelLocator>();
@@ -215,7 +211,7 @@ namespace WolvenKit.Functionality.Initialization
             }
         }
 
-        private static async Task ShellInnerInit()
+        /*private static async Task ShellInnerInit()
         {
             try
             {
@@ -246,7 +242,7 @@ namespace WolvenKit.Functionality.Initialization
             {
                 StaticReferences.Logger.Error(e);
             }
-        }
+        }*/
 
         private static void Sh_Closed(object sender, EventArgs e)
         {
@@ -301,7 +297,8 @@ namespace WolvenKit.Functionality.Initialization
                     };
                 }
                 SfSkinManager.RegisterThemeSettings("MaterialDark", themeSettings);
-                SfSkinManager.SetTheme(StaticReferences.GlobalShell, new FluentTheme() { ThemeName = "MaterialDark", ShowAcrylicBackground = true });
+                //TODO:SHELL
+                //SfSkinManager.SetTheme(StaticReferences.GlobalShell, new FluentTheme() { ThemeName = "MaterialDark", ShowAcrylicBackground = true });
             }
             catch (Exception e)
             {

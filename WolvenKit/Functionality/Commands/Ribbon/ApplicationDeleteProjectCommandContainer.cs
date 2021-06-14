@@ -5,8 +5,6 @@ using Catel.IoC;
 using Catel.MVVM;
 using Catel.Services;
 using WolvenKit.Functionality.Services;
-using Orchestra.Models;
-using Orchestra.Services;
 using WolvenKit.Common;
 using WolvenKit.Common.Services;
 using WolvenKit.Functionality.WKitGlobal;

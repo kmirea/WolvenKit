@@ -3,8 +3,6 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
-using Orchestra.Models;
-using Orchestra.Services;
 using ReactiveUI;
 using WolvenKit.Common.Services;
 using WolvenKit.MVVM.Model.ProjectManagement.Project;
@@ -63,7 +61,7 @@ namespace WolvenKit.Functionality.Services
 
                         if (_recentlyUsedItemsService.Items.All(item => item.Name != location))
                         {
-                            _recentlyUsedItemsService.AddItem(new RecentlyUsedItem(location, DateTime.Now));
+                            _recentlyUsedItemsService.AddItem(new RecentlyUsedItemModel(location, DateTime.Now));
                         }
                     }
                 }

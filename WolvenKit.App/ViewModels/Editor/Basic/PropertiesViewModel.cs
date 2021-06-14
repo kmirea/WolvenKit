@@ -168,7 +168,7 @@ namespace WolvenKit.ViewModels.Editor
             if (!(string.Equals(model.GetExtension(), ERedExtension.mesh.ToString(), StringComparison.OrdinalIgnoreCase) ||
                   string.Equals(model.GetExtension(), ERedExtension.wem.ToString(), StringComparison.OrdinalIgnoreCase) ||
                   string.Equals(model.GetExtension(), ERedExtension.xbm.ToString(), StringComparison.OrdinalIgnoreCase)
-                  || Enum.TryParse<EUncookExtension>(PE_SelectedItem.GetExtension(), out _)
+                  || Enum.TryParse<EUncookExtension>(PE_SelectedItem?.GetExtension(), out _)
                 )
 
             )

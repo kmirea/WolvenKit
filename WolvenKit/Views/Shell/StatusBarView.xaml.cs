@@ -1,7 +1,7 @@
 using System;
 using Catel.IoC;
 using CatFacts.Net;
-using Orchestra.Services;
+using WolvenKit.Functionality.Services;
 
 namespace WolvenKit.Views.Shell
 {
