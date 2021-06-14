@@ -8,7 +8,11 @@
     xmlns:o="http://schemas.microsoft.com/winfx/2006/xaml/presentation/options"
     xmlns:shell="clr-namespace:WolvenKit.Views.Shell" 
     xmlns:reactiveUi="http://reactiveui.net"
-    xmlns:shell1="clr-namespace:WolvenKit.ViewModels.Shell;assembly=WolvenKit.App">
+    xmlns:shell1="clr-namespace:WolvenKit.ViewModels.Shell;assembly=WolvenKit.App"
+    WindowStyle="None"
+    AllowsTransparency="True"
+    ResizeMode="CanResizeWithGrip"
+    Title="WolvenKit">
 
 
 
@@ -19,12 +23,12 @@
         </Grid.Resources>
 
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
+            <RowDefinition Height="175" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
         <Grid />
 
-        <shell:RibbonView Grid.Row="0" />
+        <shell:RibbonView Grid.Row="0" VerticalAlignment="Bottom" MouseLeftButtonDown="RibbonView_MouseLeftButtonDown" />
 
         <shell:DockingAdapter Grid.Row="1"
                               ActiveDocument="{Binding ActiveDocument, Mode=TwoWay}"

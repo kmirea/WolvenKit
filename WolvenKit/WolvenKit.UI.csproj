@@ -34,6 +34,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="Functionality\Behavior\**" />
+    <Compile Remove="Functionality\Services\**" />
     <Compile Remove="Views\Editor\Editors\Nodes\Audio\**" />
     <Compile Remove="Views\Editor\Editors\Nodes\Quest\**" />
     <Compile Remove="Views\Editor\Editors\Nodes\Scene\**" />
@@ -41,6 +42,7 @@
     <Compile Remove="Resources\Styles\CustomBase\**" />
     <Compile Remove="Resources\Styles\Custom\**" />
     <EmbeddedResource Remove="Functionality\Behavior\**" />
+    <EmbeddedResource Remove="Functionality\Services\**" />
     <EmbeddedResource Remove="Views\Editor\Editors\Nodes\Audio\**" />
     <EmbeddedResource Remove="Views\Editor\Editors\Nodes\Quest\**" />
     <EmbeddedResource Remove="Views\Editor\Editors\Nodes\Scene\**" />
@@ -48,6 +50,7 @@
     <EmbeddedResource Remove="Resources\Styles\CustomBase\**" />
     <EmbeddedResource Remove="Resources\Styles\Custom\**" />
     <None Remove="Functionality\Behavior\**" />
+    <None Remove="Functionality\Services\**" />
     <None Remove="Views\Editor\Editors\Nodes\Audio\**" />
     <None Remove="Views\Editor\Editors\Nodes\Quest\**" />
     <None Remove="Views\Editor\Editors\Nodes\Scene\**" />
@@ -55,6 +58,7 @@
     <None Remove="Resources\Styles\CustomBase\**" />
     <None Remove="Resources\Styles\Custom\**" />
     <Page Remove="Functionality\Behavior\**" />
+    <Page Remove="Functionality\Services\**" />
     <Page Remove="Views\Editor\Editors\Nodes\Audio\**" />
     <Page Remove="Views\Editor\Editors\Nodes\Quest\**" />
     <Page Remove="Views\Editor\Editors\Nodes\Scene\**" />
@@ -1798,8 +1802,5 @@
     <Page Update="Views\Templates\HandleTemplateView.xaml">
       <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
     </Page>
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Functionality\Services\" />
   </ItemGroup>
 </Project>

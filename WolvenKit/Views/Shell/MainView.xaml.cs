@@ -32,14 +32,18 @@ namespace WolvenKit.Views.Shell
             StaticReferences.MainView = this;
         }
 
+
         #endregion Constructors
 
         #region Methods
 
-       
+        private void RibbonView_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            base.OnMouseLeftButtonDown(e);
+            DragMove();
+        }
 
         #endregion Methods
-
 
     }
 }
