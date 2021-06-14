@@ -20,6 +20,11 @@ using WolvenKit.Functionality.Services;
 using WolvenKit.RED4.CR2W.Archive;
 using ModTools = WolvenKit.Modkit.RED4.ModTools;
 using Orchestra.Services;
+using WolvenKit.Common;
+using WolvenKit.Common.Model;
+using System.Collections.Generic;
+using System.Diagnostics;
+using WolvenKit.Common.Extensions;
 
 namespace WolvenKit.ViewModels.Editor
 {
@@ -112,8 +117,12 @@ namespace WolvenKit.ViewModels.Editor
 
             ProcessAllCommand = new TaskCommand(ExecuteProcessAll, CanProcessAll);
             ProcessSelectedCommand = new TaskCommand(ExecuteProcessSelected, CanProcessSelected);
-
             CopyArgumentsTemplateToCommand = new DelegateCommand<string>(ExecuteCopyArgumentsTemplateTo, CanCopyArgumentsTemplateTo);
+            SetCollectionCommand = new DelegateCommand<ERedExtension>(ExecuteSetCollection, CanSetCollection);
+            ConfirmMeshCollectionCommand = new DelegateCommand<string>(ExecuteConfirmMeshCollection, CanConfirmMeshCollection);
+
+            AddItemsCommand = new DelegateCommand<ObservableCollection<object>>(ExecuteAddItems, CanAddItems);
+            RemoveItemsCommand = new DelegateCommand<ObservableCollection<object>>(ExecuteRemoveItems, CanRemoveItems);
 
             _watcherService.Files
                 .Connect()
@@ -135,6 +144,9 @@ namespace WolvenKit.ViewModels.Editor
         }
 
         #region properties
+
+        public ObservableCollection<FileEntry> MeshExportAvailableCollection { get; set; } = new();
+        public ObservableCollection<FileEntry> MeshExportSelectedCollection { get; set; } = new();
 
         /// <summary>
         /// Public Importable Items
@@ -204,6 +216,99 @@ namespace WolvenKit.ViewModels.Editor
         public bool IsImportsSelected { get; set; }
 
         #endregion properties
+
+        public ICommand AddItemsCommand { get; private set; }
+        public ICommand RemoveItemsCommand { get; private set; }
+
+        private bool CanAddItems(ObservableCollection<object> items) => true;
+
+        private void ExecuteAddItems(ObservableCollection<object> items)
+        {
+            foreach (var item in items)
+            {
+                var newitem = item as FileEntry;
+                if (!MeshExportSelectedCollection.Contains(newitem))
+                {
+                    MeshExportSelectedCollection.Add(newitem);
+                }
+            }
+        }
+
+        private bool CanRemoveItems(ObservableCollection<object> items) => true;
+
+        private void ExecuteRemoveItems(ObservableCollection<object> items)
+        {
+            var x = new List<FileEntry>();
+            foreach (var item in items)
+            {
+                var newitem = item as FileEntry;
+                x.Add(newitem);
+            }
+            MeshExportSelectedCollection.RemoveMany(x);
+        }
+
+        public ICommand ConfirmMeshCollectionCommand { get; private set; }
+
+        private bool CanConfirmMeshCollection(string v) => true;
+
+        private void ExecuteConfirmMeshCollection(string v)
+        {
+            if (SelectedExport is not { Properties: MeshExportArgs meshExportArgs } ||
+                _gameController.GetController() is not Cp77Controller cp77Controller)
+            {
+                Trace.WriteLine("failed to confirm");
+
+                return;
+            }
+
+            // set mesh props
+            switch (v)
+            {
+                case nameof(MeshExportArgs.MultiMeshArgs.MultiMeshMeshes):
+                    meshExportArgs.MultiMeshargs.MultiMeshMeshes =
+                        MeshExportSelectedCollection.ToList();
+                    _notificationService.Success($"Selected Meshes were added to MultiMesh arguments.");
+
+                    break;
+
+                case nameof(MeshExportArgs.MultiMeshArgs.MultiMeshRigs):
+                    meshExportArgs.MultiMeshargs.MultiMeshRigs =
+                        MeshExportSelectedCollection.ToList();
+                    _notificationService.Success($"Selected Rigs were added to MultiMesh arguments.");
+
+                    break;
+
+                case nameof(MeshExportArgs.WithRigMeshargs.Rig):
+                    meshExportArgs.WithRigMeshargs.Rig = new List<FileEntry>(){ MeshExportSelectedCollection.FirstOrDefault() };
+                    _notificationService.Success($"Selected Rigs were added to WithRig arguments.");
+
+                    break;
+
+                default:
+                    break;
+            }
+
+        }
+
+        public ICommand SetCollectionCommand { get; private set; }
+
+        private bool CanSetCollection(ERedExtension selectedType) => true;
+
+        private void ExecuteSetCollection(ERedExtension selectedType)
+        {
+            if (SelectedExport is not { Properties: MeshExportArgs meshExportArgs } ||
+                _gameController.GetController() is not Cp77Controller cp77Controller)
+            {
+                return;
+            }
+
+            var archivemanager = cp77Controller.GetArchiveManagersManagers(false).First() as ArchiveManager;
+            MeshExportAvailableCollection.Clear();
+            if (archivemanager != null)
+            {
+                MeshExportAvailableCollection.AddRange(archivemanager.GroupedFiles[$".{selectedType}"]);
+            }
+        }
 
         public ICommand CopyArgumentsTemplateToCommand { get; private set; }
 
@@ -301,7 +406,9 @@ namespace WolvenKit.ViewModels.Editor
             if (fi.Exists)
             {
                 var settings = new GlobalImportArgs().Register(item.Properties as ImportArgs);
-                await Task.Run(() => _modTools.Import(fi, settings, new DirectoryInfo(proj.ModDirectory)));
+                var rawDir = new DirectoryInfo(proj.RawDirectory);
+                var redrelative = new RedRelativePath(rawDir, fi.GetRelativePath(rawDir));
+                await Task.Run(() => _modTools.Import(redrelative, settings, new DirectoryInfo(proj.ModDirectory)));
             }
         }
 
@@ -328,7 +435,6 @@ namespace WolvenKit.ViewModels.Editor
                 await Task.Run(() => _modTools.Export(fi, settings,
                     new DirectoryInfo(proj.ModDirectory),
                     new DirectoryInfo(proj.RawDirectory)));
-
             }
         }
 

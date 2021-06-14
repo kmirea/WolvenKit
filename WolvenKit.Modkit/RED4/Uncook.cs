@@ -260,7 +260,7 @@ namespace WolvenKit.Modkit.RED4
                     return UncookMlmask(cr2wStream, outfile, settings.Get<MlmaskExportArgs>());
 
                 case ECookedFileFormat.mesh:
-                    return (HandleMesh(cr2wStream, outfile, settings.Get<MeshExportArgs>()));
+                    return HandleMesh(cr2wStream, outfile, settings.Get<MeshExportArgs>());
 
                 case ECookedFileFormat.morphtarget:
                     return _targetTools.ExportTargets(cr2wStream, outfile);
@@ -402,15 +402,71 @@ namespace WolvenKit.Modkit.RED4
                     archives.Add(ar);
                 }
             }
-            return meshargs.meshExportType switch
+
+            switch (meshargs.meshExportType)
             {
-                MeshExportType.Default => _meshTools.ExportMesh(cr2wStream, cr2wFileName),
-                MeshExportType.WithMaterials => ExportMeshWithMaterialsUsingArchives(cr2wStream, cr2wFileName,
-                    archives, meshargs.isGLBinary, meshargs.WithMaterialMeshargs.MaterialUncookExtension, meshargs.LodFilter),
-                MeshExportType.WithRig => _meshTools.ExportMeshWithRig(cr2wStream, meshargs.WithRigMeshargs.RigStream.FirstOrDefault(),
-                    cr2wFileName),
-                _ => false
-            };
+                case MeshExportType.Default:
+                    return _meshTools.ExportMesh(cr2wStream, cr2wFileName);
+                case MeshExportType.WithMaterials:
+                    return ExportMeshWithMaterialsUsingArchives(cr2wStream, cr2wFileName, archives, meshargs.isGLBinary,
+                        meshargs.WithMaterialMeshargs.MaterialUncookExtension, meshargs.LodFilter);
+                case MeshExportType.WithRig:
+                {
+                    var entry = meshargs.WithRigMeshargs.Rig.FirstOrDefault();
+                    if (entry == null)
+                    {
+                        return false;
+                    }
+
+                    var ar = entry.Archive as Archive;
+                    using var ms = new MemoryStream();
+                    ar?.CopyFileToStreamWithoutBuffers(ms, entry.NameHash64);
+
+                    return _meshTools.ExportMeshWithRig(cr2wStream, ms, cr2wFileName);
+                }
+                case MeshExportType.Multimesh:
+                {
+                    var meshes = meshargs.MultiMeshargs.MultiMeshMeshes;
+                    if (!meshes.Any())
+                    {
+                        return false;
+                    }
+                    var rigs = meshargs.MultiMeshargs.MultiMeshRigs;
+
+                    var meshstreams = meshes.Select(
+                            delegate (FileEntry entry)
+                            {
+                                var ar = entry.Archive as Archive;
+                                using var ms = new MemoryStream();
+                                ar?.CopyFileToStreamWithoutBuffers(ms, entry.NameHash64);
+                                return (Stream)ms;
+                            })
+                        .ToList();
+
+                    if (!rigs.Any())
+                    {
+                        return _meshTools.ExportMultiMeshWithoutRig(meshstreams, cr2wFileName, meshargs.LodFilter,
+                            meshargs.isGLBinary);
+                    }
+                    else
+                    {
+                        var rigstreams = rigs.Select(
+                                delegate (FileEntry entry)
+                                {
+                                    var ar = entry.Archive as Archive;
+                                    using var ms = new MemoryStream();
+                                    ar?.CopyFileToStreamWithoutBuffers(ms, entry.NameHash64);
+                                    return (Stream) ms;
+                                })
+                            .ToList();
+
+                        return _meshTools.ExportMultiMeshWithRig(meshstreams, rigstreams, cr2wFileName, meshargs.LodFilter, meshargs.isGLBinary);
+                    }
+
+                }
+                default:
+                    return false;
+            }
         }
 
         private bool UncookWem(string infile, string outfile)

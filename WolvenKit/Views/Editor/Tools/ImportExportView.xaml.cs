@@ -4,10 +4,13 @@ using System.IO;
 using System.Linq;
 using System.Windows;
 using Catel.IoC;
+using Syncfusion.Windows.PropertyGrid;
 using WolvenKit.Common;
 using WolvenKit.Common.DDS;
+using WolvenKit.Common.Model.Arguments;
 using WolvenKit.Functionality.Commands;
 using WolvenKit.Functionality.Helpers;
+using WolvenKit.RED4.CR2W.Types;
 using WolvenKit.ViewModels.Editor;
 
 namespace WolvenKit.Views.Editor
@@ -90,6 +93,8 @@ namespace WolvenKit.Views.Editor
         /// <param name="e"></param>
         private void CancelSelectingClick(object sender, RoutedEventArgs e) => XAML_FileSelectingOverlay.SetCurrentValue(VisibilityProperty, Visibility.Collapsed);
 
+        private PropertyItem _propertyItem;
+
         /// <summary>
         /// Override PG Collection Editor
         /// </summary>
@@ -97,6 +102,39 @@ namespace WolvenKit.Views.Editor
         /// <param name="e"></param>
         private void PropertyGrid_CollectionEditorOpening(object sender, Syncfusion.Windows.PropertyGrid.CollectionEditorOpeningEventArgs e)
         {
+            if (ViewModel is ImportExportViewModel vm && sender is PropertyGrid pg)
+            {
+                if (vm.MeshExportSelectedCollection != null)
+                {
+                    vm.MeshExportSelectedCollection.Clear();
+                }
+
+                _propertyItem = pg.SelectedPropertyItem;
+                switch (_propertyItem.Name)
+                {
+                    case nameof(MeshExportArgs.MultiMeshArgs.MultiMeshMeshes):
+
+                        vm.SetCollectionCommand.SafeExecute(ERedExtension.mesh);
+
+                        break;
+
+                    case nameof(MeshExportArgs.MultiMeshArgs.MultiMeshRigs):
+
+                        vm.SetCollectionCommand.SafeExecute(ERedExtension.rig);
+
+                        break;
+
+                    case nameof(MeshExportArgs.WithRigMeshargs.Rig):
+
+                        vm.SetCollectionCommand.SafeExecute(ERedExtension.rig);
+
+                        break;
+
+                    default:
+                        break;
+                }
+            }
+
             e.Cancel = true;
             XAML_FileSelectingOverlay.SetCurrentValue(VisibilityProperty, Visibility.Visible);
         }
@@ -104,5 +142,30 @@ namespace WolvenKit.Views.Editor
         private void Button_Click(object sender, RoutedEventArgs e) => HelpOverlay.SetCurrentValue(VisibilityProperty, Visibility.Visible);
 
         private void Button_Click_1(object sender, RoutedEventArgs e) => HelpOverlay.SetCurrentValue(VisibilityProperty, Visibility.Collapsed);
+
+        private void ConfirmCollectionEditorSelection_OnClick(object sender, RoutedEventArgs e)
+        {
+            XAML_FileSelectingOverlay.SetCurrentValue(VisibilityProperty, Visibility.Collapsed);
+            if (ViewModel is ImportExportViewModel vm)
+            {
+                vm.ConfirmMeshCollectionCommand.SafeExecute(_propertyItem.Name);
+            }
+        }
+
+        private void AddItemsButtonClick(object sender, RoutedEventArgs e)
+        {
+            if (ViewModel is ImportExportViewModel vm)
+            {
+                vm.AddItemsCommand.SafeExecute(FileSelectionDataGrid.SelectedItems);
+            }
+        }
+
+        private void RemoveItemsButtonClick(object sender, RoutedEventArgs e)
+        {
+            if (ViewModel is ImportExportViewModel vm)
+            {
+                vm.RemoveItemsCommand.SafeExecute(SelectedFilesGrid.SelectedItems);
+            }
+        }
     }
 }
