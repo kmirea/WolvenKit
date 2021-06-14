@@ -8,7 +8,6 @@ using WolvenKit.Common.Oodle;
 using System.Collections.Generic;
 using System.Linq;
 using SharpGLTF.Schema2;
-using WolvenKit.Modkit.RED4.MeshFile;
 using WolvenKit.Modkit.RED4.Materials.Types;
 using WolvenKit.Common.DDS;
 using WolvenKit.RED4.CR2W.Archive;
@@ -16,10 +15,8 @@ using WolvenKit.Common.FNV1A;
 using WolvenKit.Modkit.RED4.MaterialSetupFile;
 using SharpGLTF.IO;
 using System.Threading;
-using Catel.IoC;
 using WolvenKit.Common.Model.Arguments;
 using WolvenKit.Common.Services;
-using WolvenKit.Modkit.RED4;
 
 namespace WolvenKit.Modkit.RED4
 {
@@ -29,7 +26,7 @@ namespace WolvenKit.Modkit.RED4
     public partial class ModTools
     {
         static string cacheDir = Path.GetTempPath() + "WolvenKit\\Material\\Temp\\";
-        public bool ExportMeshWithMaterialsUsingAssetLib(Stream meshStream, DirectoryInfo assetLib, string _meshName, FileInfo outfile, bool isGLBinary = true, bool copyTextures = false, EUncookExtension eUncookExtension = EUncookExtension.dds, bool LodFilter = true)
+        public bool ExportMeshWithMaterialsUsingAssetLib(Stream meshStream, DirectoryInfo assetLib, FileInfo outfile, bool isGLBinary = true, bool copyTextures = false, EUncookExtension eUncookExtension = EUncookExtension.dds, bool LodFilter = true)
         {
             Directory.CreateDirectory(cacheDir);
             var mesh_cr2w = _wolvenkitFileService.TryReadRED4File(meshStream);
@@ -50,27 +47,13 @@ namespace WolvenKit.Modkit.RED4
                 return true;
             }
 
-            List<RawMeshContainer> expMeshes = new List<RawMeshContainer>();
 
             MemoryStream ms = MeshTools.GetMeshBufferStream(meshStream, mesh_cr2w);
             MeshesInfo meshinfo = MeshTools.GetMeshesinfo(mesh_cr2w);
-            for (int i = 0; i < meshinfo.meshC; i++)
-            {
-                if (meshinfo.LODLvl[i] != 1 && LodFilter)
-                    continue;
-                RawMeshContainer mesh = MeshTools.ContainRawMesh(ms, meshinfo.vertCounts[i], meshinfo.indCounts[i], meshinfo.vertOffsets[i], meshinfo.tx0Offsets[i], meshinfo.normalOffsets[i], meshinfo.colorOffsets[i], meshinfo.unknownOffsets[i], meshinfo.indicesOffsets[i], meshinfo.vpStrides[i], meshinfo.qScale, meshinfo.qTrans, meshinfo.weightcounts[i]);
-                mesh.name = _meshName + "_" + i + "_" + meshinfo.LODLvl[i];
 
-                mesh.appNames = new string[meshinfo.appearances.Count];
-                mesh.materialNames = new string[meshinfo.appearances.Count];
-                for (int e = 0; e < meshinfo.appearances.Count; e++)
-                {
-                    mesh.appNames[e] = meshinfo.appearances[e].Name;
-                    mesh.materialNames[e] = meshinfo.appearances[e].MaterialNames[i];
-                }
-                expMeshes.Add(mesh);
-            }
-            ModelRoot model = MeshTools.RawRigidMeshesToGLTF(expMeshes);
+            List<RawMeshContainer> expMeshes = MeshTools.ContainRawMesh(ms, meshinfo, LodFilter);
+
+            ModelRoot model = MeshTools.RawMeshesToGLTF(expMeshes,null);
 
             DirectoryInfo outDir = new DirectoryInfo(outfile.DirectoryName + "\\" + Path.GetFileNameWithoutExtension(outfile.FullName) + "_Textures\\");
             Directory.CreateDirectory(outDir.FullName);
@@ -90,7 +73,7 @@ namespace WolvenKit.Modkit.RED4
             return true;
         }
 
-        public bool ExportMeshWithMaterialsUsingArchives(Stream meshStream, string _meshName, FileInfo outfile, List<Archive> archives, bool isGLBinary = true, EUncookExtension eUncookExtension = EUncookExtension.dds, bool LodFilter = true)
+        public bool ExportMeshWithMaterialsUsingArchives(Stream meshStream, FileInfo outfile, List<Archive> archives, bool isGLBinary = true, EUncookExtension eUncookExtension = EUncookExtension.dds, bool LodFilter = true)
         {
             Directory.CreateDirectory(cacheDir);
             var mesh_cr2w = _wolvenkitFileService.TryReadRED4File(meshStream);
@@ -114,30 +97,13 @@ namespace WolvenKit.Modkit.RED4
                     tempmodel.SaveGLTF(outfile.FullName);
                 return true;
             }
-            List<RawMeshContainer> expMeshes = new List<RawMeshContainer>();
 
             MemoryStream ms = MeshTools.GetMeshBufferStream(meshStream, mesh_cr2w);
             MeshesInfo meshinfo = MeshTools.GetMeshesinfo(mesh_cr2w);
-            for (int i = 0; i < meshinfo.meshC; i++)
-            {
-                if (meshinfo.LODLvl[i] != 1 && LodFilter)
-                    continue;
-                RawMeshContainer mesh = MeshTools.ContainRawMesh(ms, meshinfo.vertCounts[i], meshinfo.indCounts[i],
-                    meshinfo.vertOffsets[i], meshinfo.tx0Offsets[i], meshinfo.normalOffsets[i],
-                    meshinfo.colorOffsets[i], meshinfo.unknownOffsets[i], meshinfo.indicesOffsets[i],
-                    meshinfo.vpStrides[i], meshinfo.qScale, meshinfo.qTrans, meshinfo.weightcounts[i]);
-                mesh.name = _meshName + "_" + i + "_" + meshinfo.LODLvl[i];
 
-                mesh.appNames = new string[meshinfo.appearances.Count];
-                mesh.materialNames = new string[meshinfo.appearances.Count];
-                for (int e = 0; e < meshinfo.appearances.Count; e++)
-                {
-                    mesh.appNames[e] = meshinfo.appearances[e].Name;
-                    mesh.materialNames[e] = meshinfo.appearances[e].MaterialNames[i];
-                }
-                expMeshes.Add(mesh);
-            }
-            ModelRoot model = MeshTools.RawRigidMeshesToGLTF(expMeshes);
+            List<RawMeshContainer> expMeshes = MeshTools.ContainRawMesh(ms, meshinfo, LodFilter);
+
+            ModelRoot model = MeshTools.RawMeshesToGLTF(expMeshes,null);
 
             DirectoryInfo outDir = new DirectoryInfo(outfile.DirectoryName + "\\" + Path.GetFileNameWithoutExtension(outfile.FullName) + "_Textures\\");
             if (!outDir.Exists)

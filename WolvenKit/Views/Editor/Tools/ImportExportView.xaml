@@ -12,6 +12,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:po="http://schemas.microsoft.com/winfx/2006/xaml/presentation/options"
     xmlns:syncfusion="http://schemas.syncfusion.com/wpf"
+    xmlns:system="clr-namespace:System;assembly=System.Runtime"
     d:DataContext="{d:DesignInstance Type=editor:ImportExportViewModel}"
     mc:Ignorable="d">
 
@@ -115,6 +116,7 @@
                 ColumnSizer="Auto"
                 ItemsSource="{Binding ImportableItems}"
                 SelectedItem="{Binding SelectedImport}"
+                SelectedItems="{Binding SelectedImports}"
                 SelectionMode="Extended"
                 Visibility="{Binding Path=IsChecked, ElementName=ImportCheckBox, Converter={StaticResource boolToVisibilityConverter}}">
 
@@ -159,26 +161,6 @@
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
                         Orientation="Horizontal">
-
-                        <Button
-                            Margin="5,0,5,0"
-                            Padding="2,0,2,0"
-                            Background="{DynamicResource ContentBackground}"
-                            BorderBrush="{DynamicResource ContentBackgroundAlt}"
-                            BorderThickness="1"
-                            FontSize="12"
-                            Style="{DynamicResource ButtonCustom}">
-                            <StackPanel Orientation="Horizontal">
-                                <iconPacks:PackIconFontAwesome
-                                    Width="13"
-                                    Height="13"
-                                    HorizontalAlignment="Center"
-                                    VerticalAlignment="Center"
-                                    Kind="CheckDoubleSolid" />
-
-                                <TextBlock Text="Select All" />
-                            </StackPanel>
-                        </Button>
 
                         <Button
                             Margin="5,0,5,0"
@@ -262,6 +244,8 @@
                             Background="{DynamicResource ContentBackground}"
                             BorderBrush="{DynamicResource ContentBackgroundAlt}"
                             BorderThickness="1"
+                            Command="{Binding CopyArgumentsTemplateToCommand}"
+                            CommandParameter="{Binding Path=SelectedItem.Content, ElementName=ToThese}"
                             FontSize="12"
                             Style="{DynamicResource ButtonCustom}">
                             <StackPanel Orientation="Horizontal">
@@ -276,6 +260,7 @@
                         </Button>
                         <TextBlock Text="settings from selected file to : " />
                         <syncfusion:ComboBoxAdv
+                            x:Name="ToThese"
                             VerticalAlignment="Center"
                             FontSize="12"
                             SelectedIndex="0"
@@ -284,6 +269,22 @@
                             <syncfusion:ComboBoxItemAdv Content="Selected in Grid" />
                             <syncfusion:ComboBoxItemAdv Content="All in Grid" />
                         </syncfusion:ComboBoxAdv>
+                        <Button
+                            Margin="5,0,5,0"
+                            Padding="2,0,2,0"
+                            Click="Button_Click"
+                            FontSize="12"
+                            Style="{DynamicResource ButtonCustom}">
+                            <StackPanel Orientation="Horizontal">
+                                <iconPacks:PackIconEntypo
+                                    Width="13"
+                                    Height="13"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Kind="help" />
+                                <TextBlock Text="Help" />
+                            </StackPanel>
+                        </Button>
                     </StackPanel>
                 </StackPanel>
             </Grid>
@@ -341,6 +342,7 @@
                     </StackPanel>
 
                     <CheckBox
+                        x:Name="ApplyToAllCheckbox"
                         Margin="3,0,0,0"
                         HorizontalAlignment="Left"
                         VerticalAlignment="Top"
@@ -383,7 +385,7 @@
             Grid.RowSpan="4"
             Grid.ColumnSpan="4"
             Background="Gray"
-            Visibility="Collapsed">
+            Visibility="{Binding IsProcessing, Converter={StaticResource boolToVisibilityConverter}}">
             <syncfusion:SfBusyIndicator AnimationType="Gear" />
             <TextBlock
                 x:Name="ImportExportOverlayText"
@@ -391,6 +393,25 @@
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
                 Text="Files are being processed..." />
+        </Grid>
+
+        <Grid
+            x:Name="HelpOverlay"
+            Grid.RowSpan="4"
+            Grid.ColumnSpan="4"
+            Background="{DynamicResource ContentBackgroundAlt}"
+            Visibility="Collapsed">
+            <TextBlock TextAlignment="Center">
+                1 : Select and lock file.<LineBreak />
+                2 : Select All / items in grid to copy to.<LineBreak />
+                3 : Press copy (Maybe adjust the combobox)</TextBlock>
+            <Button
+                Margin="0,150,0,0"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Click="Button_Click_1"
+                Content="Understood!"
+                Style="{DynamicResource ButtonDefault}" />
         </Grid>
 
         <!--  Overlay For File Selection  -->
@@ -401,84 +422,169 @@
             Background="{DynamicResource ContentBackgroundAlt}"
             Visibility="Collapsed">
 
-            <syncfusion:TabControlExt>
-                <syncfusion:TabItemExt Header="Add Files">
-                    <Grid>
-                        <syncfusion:SfDataGrid x:Name="FileSelectionDataGrid" Margin="0,0,0,40" />
-                        <Border Margin="5" VerticalAlignment="Bottom">
-                            <Grid>
-                                <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
-                                    <!--  Cancel Button  -->
-                                    <Button
-                                        Height="30"
-                                        Margin="5,0,5,0"
-                                        Padding="5"
-                                        Click="CancelSelectingClick"
-                                        FontSize="12"
-                                        Style="{DynamicResource ButtonDefault}">
-                                        <StackPanel Orientation="Horizontal">
+            <Grid>
 
-                                            <TextBlock Text="Cancel" />
-                                        </StackPanel>
-                                    </Button>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="25" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="1" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!--  Titles  -->
+                <TextBlock
+                    Grid.Column="0"
+                    Padding="2"
+                    Background="{DynamicResource MahApps.Brushes.Accent3}"
+                    Text="Select File(s)"
+                    TextAlignment="Center" />
+                <TextBlock
+                    Grid.Column="2"
+                    Padding="2"
+                    Background="{DynamicResource MahApps.Brushes.Accent3}"
+                    Text=" Selected File(s)"
+                    TextAlignment="Center" />
+
+                <!--  Divider  -->
+                <Grid
+                    Grid.Row="1"
+                    Grid.Column="1"
+                    Background="{DynamicResource ContentBackgroundAlt2}" />
+
+                <!--  Selection Grid  -->
+                <Grid
+                    Grid.Row="1"
+                    Grid.Column="0"
+                    Background="{DynamicResource ContentBackgroundAlt2}">
+                    <Grid>
+                        <syncfusion:SfDataGrid
+                            x:Name="FileSelectionDataGrid"
+                            Margin="0,0,0,40"
+                            AllowFiltering="True"
+                            AllowResizingColumns="True"
+                            AutoGenerateColumns="False"
+                            ColumnSizer="Auto"
+                            FilterRowPosition="FixedTop"
+                            ItemsSource="{Binding MeshExportAvailableCollection}"
+                            SelectionMode="Extended">
+
+                            <syncfusion:SfDataGrid.Columns>
+                                <syncfusion:GridTextColumn
+                                    AllowEditing="False"
+                                    FilterRowCondition="Contains"
+                                    HeaderText="File Name"
+                                    HorizontalHeaderContentAlignment="Left"
+                                    ImmediateUpdateColumnFilter="True"
+                                    MappingName="ShortName" />
+                                <syncfusion:GridTextColumn
+                                    AllowEditing="False"
+                                    FilterRowCondition="Contains"
+                                    HeaderText="Full Path"
+                                    HorizontalHeaderContentAlignment="Left"
+                                    ImmediateUpdateColumnFilter="True"
+                                    MappingName="Name" />
+                            </syncfusion:SfDataGrid.Columns>
+                        </syncfusion:SfDataGrid>
+                        <Border
+                            Margin="0"
+                            Padding="5"
+                            VerticalAlignment="Bottom"
+                            Background="{DynamicResource ContentBackground}"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="1">
+                            <Grid>
+                                <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
+
                                     <!--  Add Button  -->
                                     <Button
                                         Height="30"
-                                        Margin="5,0,5,0"
+                                        Margin="0,0,5,0"
                                         Padding="5"
+                                        Background="{DynamicResource ContentBackgroundAlt}"
+                                        Click="AddItemsButtonClick"
                                         FontSize="12"
-                                        Style="{DynamicResource ButtonDefault}">
+                                        Style="{DynamicResource MahApps.Styles.Button.ToolBar}">
                                         <StackPanel Orientation="Horizontal">
+                                            <iconPacks:PackIconPixelartIcons Kind="AddBoxMultiple" />
 
-                                            <TextBlock Text="Add selected file" />
-                                        </StackPanel>
-                                    </Button>
-                                    <!--  Confirm Button  -->
-                                    <Button
-                                        Height="30"
-                                        Margin="5,0,5,0"
-                                        Padding="5"
-                                        FontSize="12"
-                                        Style="{DynamicResource ButtonDefault}">
-                                        <StackPanel Orientation="Horizontal">
-
-                                            <TextBlock Text="Confirm" />
+                                            <TextBlock Text="Add selected file(s)" />
                                         </StackPanel>
                                     </Button>
                                 </StackPanel>
                             </Grid>
                         </Border>
                     </Grid>
-                </syncfusion:TabItemExt>
-                <syncfusion:TabItemExt Header="Selected Files">
+                </Grid>
+
+                <!--  Selected Grid  -->
+                <Grid
+                    Grid.Row="1"
+                    Grid.Column="2"
+                    Background="{DynamicResource ContentBackgroundAlt2}">
                     <Grid>
-                        <syncfusion:SfDataGrid x:Name="SelectedFilesGrid" Margin="0,0,0,40" />
-                        <Border Margin="5" VerticalAlignment="Bottom">
+                        <syncfusion:SfDataGrid
+                            x:Name="SelectedFilesGrid"
+                            Margin="0,0,0,40"
+                            AllowFiltering="True"
+                            AutoGenerateColumns="False"
+                            ColumnSizer="AutoWithLastColumnFill"
+                            FilterRowPosition="FixedTop"
+                            ItemsSource="{Binding MeshExportSelectedCollection}"
+                            SelectionMode="Extended">
+                            <syncfusion:SfDataGrid.Columns>
+                                <syncfusion:GridTextColumn
+                                    AllowEditing="False"
+                                    FilterRowCondition="Contains"
+                                    HeaderText="File Name"
+                                    HorizontalHeaderContentAlignment="Left"
+                                    ImmediateUpdateColumnFilter="True"
+                                    MappingName="ShortName" />
+                            </syncfusion:SfDataGrid.Columns>
+                        </syncfusion:SfDataGrid>
+                        <Border
+                            Margin="0"
+                            Padding="5"
+                            VerticalAlignment="Bottom"
+                            Background="{DynamicResource ContentBackground}"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="1">
+
                             <Grid>
-                                <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+
+                                <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
+
+                                    <!--  Renove Button  -->
+                                    <Button
+                                        Height="30"
+                                        Margin="0,0,5,0"
+                                        Padding="5"
+                                        Background="{DynamicResource ContentBackgroundAlt}"
+                                        Click="RemoveItemsButtonClick"
+                                        FontSize="12"
+                                        Style="{DynamicResource MahApps.Styles.Button.ToolBar}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <iconPacks:PackIconPixelartIcons Kind="RemoveBoxMultiple" />
+
+                                            <TextBlock Text="Remove selected file(s)" />
+                                        </StackPanel>
+                                    </Button>
+
                                     <!--  Cancel Button  -->
                                     <Button
                                         Height="30"
                                         Margin="5,0,5,0"
                                         Padding="5"
+                                        Background="{DynamicResource ContentBackgroundAlt}"
                                         Click="CancelSelectingClick"
                                         FontSize="12"
-                                        Style="{DynamicResource ButtonDefault}">
+                                        Style="{DynamicResource MahApps.Styles.Button.ToolBar}">
                                         <StackPanel Orientation="Horizontal">
 
                                             <TextBlock Text="Cancel" />
-                                        </StackPanel>
-                                    </Button>
-                                    <!--  Renove Button  -->
-                                    <Button
-                                        Height="30"
-                                        Margin="5,0,5,0"
-                                        Padding="5"
-                                        FontSize="12"
-                                        Style="{DynamicResource ButtonDefault}">
-                                        <StackPanel Orientation="Horizontal">
-
-                                            <TextBlock Text="Remove selected file" />
                                         </StackPanel>
                                     </Button>
                                     <!--  Confirm Button  -->
@@ -486,8 +592,10 @@
                                         Height="30"
                                         Margin="5,0,5,0"
                                         Padding="5"
+                                        Background="{DynamicResource ContentBackgroundAlt}"
+                                        Click="ConfirmCollectionEditorSelection_OnClick"
                                         FontSize="12"
-                                        Style="{DynamicResource ButtonDefault}">
+                                        Style="{DynamicResource MahApps.Styles.Button.ToolBar}">
                                         <StackPanel Orientation="Horizontal">
 
                                             <TextBlock Text="Confirm" />
@@ -497,8 +605,41 @@
                             </Grid>
                         </Border>
                     </Grid>
-                </syncfusion:TabItemExt>
-            </syncfusion:TabControlExt>
+                </Grid>
+                <Grid
+                    Grid.RowSpan="2"
+                    Grid.ColumnSpan="4"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Background="{DynamicResource ContentBackground}">
+                    <StackPanel>
+                        <!--  Remove Button <  -->
+                        <Button
+                            Height="30"
+                            Padding="5"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            Click="RemoveItemsButtonClick"
+                            FontSize="12"
+                            Style="{DynamicResource MahApps.Styles.Button.ToolBar}">
+                            <StackPanel Orientation="Horizontal">
+                                <iconPacks:PackIconMaterial Kind="TransferLeft" />
+                            </StackPanel>
+                        </Button>
+                        <!--  Add Button >  -->
+                        <Button
+                            Height="30"
+                            Padding="5"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            Click="AddItemsButtonClick"
+                            FontSize="12"
+                            Style="{DynamicResource MahApps.Styles.Button.ToolBar}">
+                            <StackPanel Orientation="Horizontal">
+                                <iconPacks:PackIconMaterial Kind="TransferRight" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Grid>
         </Grid>
 
         <!--  file succesfully/error adding/added window.  -->

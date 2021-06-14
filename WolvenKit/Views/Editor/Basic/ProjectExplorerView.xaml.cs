@@ -11,7 +11,6 @@ using Syncfusion.UI.Xaml.Grid;
 using Syncfusion.UI.Xaml.TreeGrid;
 using WolvenKit.Common;
 using WolvenKit.Common.DDS;
-using WolvenKit.Common.Model.Arguments;
 using WolvenKit.Functionality.Ab4d;
 using WolvenKit.Functionality.Helpers;
 using WolvenKit.Functionality.WKitGlobal.Helpers;
@@ -28,6 +27,7 @@ namespace WolvenKit.Views.Editor
     public partial class ProjectExplorerView
     {
         #region Constructors
+
         public static ProjectExplorerView GlobalPEView;
 
         public ProjectExplorerView()
@@ -35,6 +35,41 @@ namespace WolvenKit.Views.Editor
             InitializeComponent();
             GlobalPEView = this;
 
+            TreeGrid.ItemsSourceChanged += TreeGrid_ItemsSourceChanged;
+        }
+
+        private void TreeGrid_ItemsSourceChanged(object sender, TreeGridItemsSourceChangedEventArgs e)
+        {
+            if (TreeGrid.View != null)
+            {
+                TreeGrid.View.NodeCollectionChanged += View_NodeCollectionChanged;
+            }
+        }
+
+        private void View_NodeCollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            //if (e.NewItems != null)
+            //{
+            //    foreach (var nerd in e.NewItems)
+            //    {
+            //        Trace.WriteLine(nerd.ToString());
+            //        TreeGrid.ExpandNode((TreeNode)nerd);
+            //    }
+            //}
+
+            if (ViewModel is not ProjectExplorerViewModel viewModel)
+            {
+                return;
+            }
+
+            var rootnodes = TreeGrid.View.Nodes.RootNodes;
+            foreach (var rootnode in rootnodes)
+            {
+                TreeGrid.ExpandNode(rootnode);
+            }
+
+
+            Trace.WriteLine(e.Action.ToString());
         }
 
         protected override void OnViewModelPropertyChanged(PropertyChangedEventArgs e)
@@ -61,8 +96,6 @@ namespace WolvenKit.Views.Editor
         }
 
         #endregion Constructors
-
-
 
         public void ExpandChildren()
         {
@@ -92,7 +125,6 @@ namespace WolvenKit.Views.Editor
 
         private void CollapseChildren_OnClick(object sender, RoutedEventArgs e) => CollapseChildren();
 
-
         public void ExpandAll() => TreeGrid.ExpandAllNodes();
 
         public void CollapseAll() => TreeGrid.CollapseAllNodes();
@@ -100,7 +132,5 @@ namespace WolvenKit.Views.Editor
         private void ExpandAll_OnClick(object sender, RoutedEventArgs e) => ExpandAll();
 
         private void CollapseAll_OnClick(object sender, RoutedEventArgs e) => CollapseAll();
-
-
     }
 }

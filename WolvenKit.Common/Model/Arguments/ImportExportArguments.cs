@@ -69,7 +69,6 @@ namespace WolvenKit.Common.Model.Arguments
 
             return null;
         }
-
     }
 
     /// <summary>
@@ -125,7 +124,6 @@ namespace WolvenKit.Common.Model.Arguments
 
             return null;
         }
-
     }
 
     /// <summary>
@@ -144,8 +142,6 @@ namespace WolvenKit.Common.Model.Arguments
         [Display(Name = "Replace original File?")]
         [Description("If checked the file will replace the original file in the archives.")]
         public bool Keep { get; set; }
-
-
     }
 
     /// <summary>
@@ -153,10 +149,7 @@ namespace WolvenKit.Common.Model.Arguments
     /// </summary>
     public abstract class ExportArgs : ImportExportArgs
     {
-
-
     }
-
 
     #region import args
 
@@ -165,7 +158,14 @@ namespace WolvenKit.Common.Model.Arguments
     /// </summary>
     public class CommonImportArgs : ImportArgs
     {
+    }
 
+    /// <summary>
+    /// Fnt Import Arguments
+    /// </summary>
+    public class FntImportArgs : ImportArgs
+    {
+        public override string ToString() => ".FNT";
     }
 
     /// <summary>
@@ -194,10 +194,9 @@ namespace WolvenKit.Common.Model.Arguments
         /// </summary>
         /// <returns>String</returns>
         public override string ToString() => ".Mesh";
-
     }
 
-    #endregion
+    #endregion import args
 
     #region export args
 
@@ -206,7 +205,6 @@ namespace WolvenKit.Common.Model.Arguments
     /// </summary>
     public class CommonExportArgs : ExportArgs
     {
-
     }
 
     /// <summary>
@@ -227,7 +225,14 @@ namespace WolvenKit.Common.Model.Arguments
         /// </summary>
         /// <returns>String</returns>
         public override string ToString() => "GLTF/GLB | " + $"Is Binary :  {IsBinary.ToString()}";
+    }
 
+    /// <summary>
+    /// Fnt Import Arguments
+    /// </summary>
+    public class FntExportArgs : ExportArgs
+    {
+        public override string ToString() => ".TTF";
     }
 
     /// <summary>
@@ -247,7 +252,6 @@ namespace WolvenKit.Common.Model.Arguments
         /// </summary>
         /// <returns>String</returns>
         public override string ToString() => $"{UncookExtension.ToString()}";
-
     }
 
     /// <summary>
@@ -275,7 +279,6 @@ namespace WolvenKit.Common.Model.Arguments
         /// <returns>String</returns>
         public override string ToString() => $"{UncookExtension.ToString()} | Flip : {Flip.ToString()}";
     }
-
 
     /// <summary>
     /// Mesh Export Arguments
@@ -339,14 +342,11 @@ namespace WolvenKit.Common.Model.Arguments
         [Browsable(false)]
         public string ArchiveDepot { get; set; }
 
-
         /// <summary>
         /// String Override to display info in datagrid.
         /// </summary>
         /// <returns>String</returns>
-        public override string ToString() => "GLTF/GLB | " +  $"Lod filter : {LodFilter.ToString()} | Is Binary : {isGLBinary.ToString()}";
-
-
+        public override string ToString() => "GLTF/GLB | " + $"Lod filter : {LodFilter.ToString()} | Is Binary : {isGLBinary.ToString()}";
 
         /// <summary>
         /// WithMaterials Mesh Export Arguments.
@@ -366,8 +366,6 @@ namespace WolvenKit.Common.Model.Arguments
             /// </summary>
             /// <returns>String</returns>
             public override string ToString() => "Adjust these settings if WithMaterial selected.";
-
-
         }
 
         /// <summary>
@@ -376,19 +374,18 @@ namespace WolvenKit.Common.Model.Arguments
         public class WithRigMeshArgs
         {
             /// <summary>
-            /// Selected Rig for Mesh WithRig Export.
+            /// Selected Rig for Mesh WithRig Export. ALWAYS USE THE FIRST ENTRY IN THE LIST.
             /// </summary>
             [Category("WithRig Settings")]
             [Display(Name = "Select rig(s)")]
             [Description("Select rig(s) to export within your mesh.")]
-            public Stream RigStream { get; set; }
+            public List<FileEntry> Rig { get; set; }
 
             /// <summary>
             /// String Override to display info in datagrid.
             /// </summary>
             /// <returns>String</returns>
             public override string ToString() => "Adjust these settings if WithRig selected.";
-
         }
 
         /// <summary>
@@ -401,25 +398,23 @@ namespace WolvenKit.Common.Model.Arguments
             /// </summary>
             [Category("MultiMesh Settings")]
             [Display(Name = "Select additional meshes")]
-            public List<Stream> MultiMeshMeshes { get; set; } = new();
+            public List<FileEntry> MultiMeshMeshes { get; set; } = new();      // meshes?
+
 
             /// <summary>
             /// MultiMesh Rig List.
             /// </summary>
             [Category("MultiMesh Settings")]
             [Display(Name = "Select rig(s)")]
-            public List<Stream> MultiMeshRigs { get; set; } = new();
+            public List<FileEntry> MultiMeshRigs { get; set; } = new();        // rigs
 
             /// <summary>
             /// String Override to display info in datagrid.
             /// </summary>
             /// <returns>String</returns>
             public override string ToString() => "Adjust these settings if MultiMesh selected.";
-
         }
     }
-
-
 
     /// <summary>
     /// Wem Export Arguments.
@@ -434,7 +429,6 @@ namespace WolvenKit.Common.Model.Arguments
         [Description("Set the audioformat you want your wem file to be converted to.")]
         public WemExportTypes wemExportType { get; set; } = WemExportTypes.Mp3;
 
-
         [Browsable(false)]
         public string FileName { get; set; }
 
@@ -443,7 +437,6 @@ namespace WolvenKit.Common.Model.Arguments
         /// </summary>
         /// <returns>String</returns>
         public override string ToString() => wemExportType.ToString();
-
     }
 
     /// <summary>
@@ -462,10 +455,9 @@ namespace WolvenKit.Common.Model.Arguments
     {
         Default,
         WithRig,
-        WithMaterials
+        WithMaterials,
+        Multimesh
     }
 
-    #endregion
-
-
+    #endregion export args
 }

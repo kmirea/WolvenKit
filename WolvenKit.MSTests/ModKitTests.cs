@@ -11,6 +11,8 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json;
 using WolvenKit.Common;
 using WolvenKit.Common.DDS;
+using WolvenKit.Common.Extensions;
+using WolvenKit.Common.Model;
 using WolvenKit.Common.Model.Arguments;
 using WolvenKit.Common.Tools;
 using WolvenKit.Interfaces.Core;
@@ -29,8 +31,6 @@ namespace WolvenKit.MSTests
 
         [ClassInitialize]
         public static void SetupClass(TestContext context) => Setup(context);
-
-        #region Methods
 
         [TestMethod]
         //[DataRow("audio_1_general.archive")]
@@ -232,7 +232,8 @@ namespace WolvenKit.MSTests
                     Assert.Fail($"No raw file found in {resultDir}");
                 }
 
-                var resImport = modtools.Import(rawfile, isettings);
+                var redrelative = new RedRelativePath(rawfile.Directory, rawfile.Name);
+                var resImport = modtools.Import(redrelative, isettings);
                 if (!resImport)
                 {
                     importfails.Add(fileEntry);
@@ -409,15 +410,15 @@ namespace WolvenKit.MSTests
         }
 
         [TestMethod]
-        [DataRow(ECookedFileFormat.csv)]
-        [DataRow(ECookedFileFormat.cubemap)]
-        [DataRow(ECookedFileFormat.envprobe)]
+        //[DataRow(ECookedFileFormat.csv)]
+        //[DataRow(ECookedFileFormat.cubemap)]
+        //[DataRow(ECookedFileFormat.envprobe)]
         [DataRow(ECookedFileFormat.mesh)]
-        [DataRow(ECookedFileFormat.mlmask)]
-        // [DataRow(ECookedFileFormat.morphtarget)]
-        [DataRow(ECookedFileFormat.texarray)]
-        [DataRow(ECookedFileFormat.wem)]
-        [DataRow(ECookedFileFormat.xbm)]
+        //[DataRow(ECookedFileFormat.mlmask)]
+        //// [DataRow(ECookedFileFormat.morphtarget)]
+        //[DataRow(ECookedFileFormat.texarray)]
+        //[DataRow(ECookedFileFormat.wem)]
+        //[DataRow(ECookedFileFormat.xbm)]
         public void Test_Uncook(ECookedFileFormat extension)
         {
             Environment.SetEnvironmentVariable("WOLVENKIT_ENVIRONMENT", "Testing", EnvironmentVariableTarget.Process);
@@ -485,6 +486,5 @@ namespace WolvenKit.MSTests
             Assert.AreEqual(limit,  limit - uncookfails.Count);
         }
 
-        #endregion Methods
     }
 }

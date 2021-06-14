@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
-using Catel.IoC;
 using WolvenKit.Modkit.RED4.GeneralStructs;
 using SharpGLTF.Schema2;
 using SharpGLTF.IO;
@@ -142,7 +141,7 @@ namespace WolvenKit.Modkit.RED4.MeshFile
             }
             else
             {
-                ms.SetLength(0);
+                inmeshStream.SetLength(0);
                 ms.CopyTo(inmeshStream);
             }
             return true;
