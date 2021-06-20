@@ -21,7 +21,6 @@ using WolvenKit.Functionality.WKitGlobal.Helpers;
 using WolvenKit.Implementations;
 using WolvenKit.Modkit.RED3;
 using WolvenKit.Modkit.RED4;
-using WolvenKit.Modkit.RED4.MeshFile;
 using WolvenKit.Modkit.RED4.RigFile;
 using WolvenKit.RED4.CR2W;
 using WolvenKit.Views;
@@ -86,7 +85,6 @@ namespace WolvenKit
             serviceLocator.RegisterType<Red4ParserService>();
             serviceLocator.RegisterType<TargetTools>();      //Cp77FileService
             serviceLocator.RegisterType<RIG>();              //Cp77FileService
-            serviceLocator.RegisterType<MESHIMPORTER>();     //Cp77FileService
             serviceLocator.RegisterType<MeshTools>();        //RIG, Cp77FileService
 
             serviceLocator.RegisterType<ModTools>();         //Cp77FileService, ILoggerService, IProgress, IHashService, Mesh, Target

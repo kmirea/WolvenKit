@@ -14,12 +14,16 @@ using WolvenKit.ViewModels.Shell;
 
 namespace WolvenKit.Views.Shell
 {
-    public partial class MainView : ReactiveWindow<WorkSpaceViewModel>
+    public partial class MainView : IViewFor<WorkSpaceViewModel>
     {
-        #region fields
+        public WorkSpaceViewModel ViewModel { get; set; }
 
+        object IViewFor.ViewModel
+        {
+            get => ViewModel;
+            set => ViewModel = (WorkSpaceViewModel)value;
+        }
 
-        #endregion fields
 
         #region Constructors
 

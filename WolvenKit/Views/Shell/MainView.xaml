@@ -1,19 +1,12 @@
-<reactiveUi:ReactiveWindow
-    x:TypeArguments="shell1:WorkSpaceViewModel"
+<syncfusion:ChromelessWindow
     x:Class="WolvenKit.Views.Shell.MainView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:catel="http://schemas.catelproject.com"
     xmlns:converters="clr-namespace:WolvenKit.Functionality.Converters;assembly=WolvenKit.App"
-    xmlns:o="http://schemas.microsoft.com/winfx/2006/xaml/presentation/options"
-    xmlns:shell="clr-namespace:WolvenKit.Views.Shell" 
-    xmlns:reactiveUi="http://reactiveui.net"
-    xmlns:shell1="clr-namespace:WolvenKit.ViewModels.Shell;assembly=WolvenKit.App"
-    WindowStyle="None"
-    AllowsTransparency="True"
-    ResizeMode="CanResizeWithGrip"
-    Title="WolvenKit">
-
+    xmlns:shell="clr-namespace:WolvenKit.Views.Shell"
+    Title="WolvenKit"
+    xmlns:syncfusion="http://schemas.syncfusion.com/wpf"
+	>
 
 
     <Grid Background="{DynamicResource CloudDrawingBrushMain}">
@@ -36,4 +29,4 @@
 
 
     </Grid>
-</reactiveUi:ReactiveWindow>
+</syncfusion:ChromelessWindow>
