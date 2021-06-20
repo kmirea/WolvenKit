@@ -58,6 +58,7 @@ namespace WolvenKit.ViewModels.Editor
                 ERawFileFormat.glb => new MeshImportArgs(),
                 ERawFileFormat.gltf => new MeshImportArgs(),
                 ERawFileFormat.ttf => new FntImportArgs(),
+                ERawFileFormat.wav => new OpusImportArgs(),
                 _ => new CommonImportArgs()
             };
         }
@@ -81,6 +82,7 @@ namespace WolvenKit.ViewModels.Editor
 
             return fileFormat switch
             {
+                ECookedFileFormat.opusinfo => new OpusExportArgs(),
                 ECookedFileFormat.mesh => new MeshExportArgs(),
                 ECookedFileFormat.xbm => new XbmExportArgs(),
                 ECookedFileFormat.wem => new WemExportArgs(),

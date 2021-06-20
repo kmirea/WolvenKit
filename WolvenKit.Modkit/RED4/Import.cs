@@ -8,6 +8,7 @@ using WolvenKit.Common.DDS;
 using WolvenKit.Common.Extensions;
 using WolvenKit.Common.Model;
 using WolvenKit.Common.Model.Arguments;
+using WolvenKit.Modkit.RED4.Opus;
 using WolvenKit.RED4.CR2W;
 
 namespace WolvenKit.Modkit.RED4
@@ -55,16 +56,127 @@ namespace WolvenKit.Modkit.RED4
             {
                 case ERawFileFormat.tga:
                 case ERawFileFormat.dds:
-                    // for now only xbm is supported
-                    return ImportXbm(rawRelative, outDir, args.Get<XbmImportArgs>());
+                    // check here for textures
+                    return HandleTextures(rawRelative, outDir, args);
                 case ERawFileFormat.fbx:
                 case ERawFileFormat.gltf:
                 case ERawFileFormat.glb:
                     return ImportMesh(rawRelative, outDir, args.Get<MeshImportArgs>());
                 case ERawFileFormat.ttf:
                     return ImportTtf(rawRelative, outDir, args.Get<CommonImportArgs>());
+                case ERawFileFormat.wav:
+                    return ImportWav(rawRelative, outDir, args.Get<OpusImportArgs>());
                 default:
                     throw new ArgumentOutOfRangeException();
+            }
+        }
+
+        private bool ImportWav(RedRelativePath rawRelative, DirectoryInfo outDir, OpusImportArgs opusImportArgs)
+        {
+            _loggerService.Success($"Use WolvenKit to import opus.");
+            return false;
+        }
+
+        private bool HandleTextures(RedRelativePath rawRelative, DirectoryInfo outDir, GlobalImportArgs args)
+        {
+            // dds can be imported to cubemap, envprobe, texarray, xbm, mlmask
+
+            // check for keep
+
+            // find redparents
+            foreach (var cookedTextureFormat in Enum.GetValues<ECookedTextureFormat>())
+            {
+                // check for mlmaskparent
+                if (cookedTextureFormat == ECookedTextureFormat.mlmask)
+                {
+                    // ml_w_knife__combat__grip1_01_masksset_0.dds
+                    // ml_w_knife__combat__grip1_01_masksset_10.dds
+                    var mlmaskrelpath = $"{rawRelative.RelativePath[..^4]}"; //ml_w_knife__combat__grip1_01_masksset_10
+                    var idx = mlmaskrelpath.LastIndexOf('_');
+                    if (idx == -1)
+                    {
+                        continue;
+                    }
+
+                    mlmaskrelpath = $"{mlmaskrelpath[..idx]}.mlmask";
+
+
+                    //var mlmaskrelpath2 = Path.ChangeExtension(rawRelative.RelativePath[..^4], ERedExtension.mlmask.ToString());
+                    var mlmaskParent = new RedRelativePath(rawRelative)
+                        .ChangeBaseDir(outDir)
+                        .ChangeRelativePath(mlmaskrelpath);
+
+                    if (File.Exists(mlmaskParent.FullPath))
+                    {
+                        return RebuildMlMask(mlmaskParent.FullPath);
+                    }
+
+                }
+                else
+                {
+                    // find the first matching redfile
+                    var redfile = FindRedFile(rawRelative, outDir, cookedTextureFormat.ToString());
+                    if (!string.IsNullOrEmpty(redfile))
+                    {
+                        return cookedTextureFormat == ECookedTextureFormat.xbm
+                            ? ImportXbm(rawRelative, outDir, args.Get<XbmImportArgs>())
+                            : RebuildTexture(redfile);
+                    }
+                }
+            }
+
+            _loggerService.Warning($"No existing redfile found to rebuild for {rawRelative.Name}");
+            return false;
+
+
+            bool RebuildMlMask(string redparent)
+            {
+                _loggerService.Warning($"{rawRelative.Name} - Mlmask importing is not implemented yet");
+                return false;
+
+                // get all other buffers
+#pragma warning disable 162
+                var uncookedMaskRootPath = rawRelative.RelativePath[..^6];
+                var uncookedRelative = new RedRelativePath(rawRelative)
+                    .ChangeRelativePath(uncookedMaskRootPath);
+
+                var buffers = rawRelative.ToFileInfo().Directory
+                    .GetFiles($"{uncookedRelative.Name}_*.dds", SearchOption.TopDirectoryOnly);
+
+
+                using var fileStream = new FileStream(redparent, FileMode.Open, FileAccess.ReadWrite);
+                var result = Rebuild(fileStream, buffers);
+
+                if (result)
+                {
+                    _loggerService.Success($"Rebuilt {redparent} with buffers");
+                }
+                else
+                {
+                    _loggerService.Error($"Failed to rebuild {redparent} with buffers");
+                }
+
+                return result;
+#pragma warning restore 162
+            }
+
+            bool RebuildTexture(string redparent)
+            {
+                var ddsPath = Path.ChangeExtension(rawRelative.FullName, ERawFileFormat.dds.ToString());
+
+                using var fileStream = new FileStream(redparent, FileMode.Open, FileAccess.ReadWrite);
+                var result = Rebuild(fileStream, new List<FileInfo>() {new(ddsPath ?? throw new InvalidOperationException())});
+
+                if (result)
+                {
+                    _loggerService.Success($"Rebuilt {redparent} with buffers");
+                }
+                else
+                {
+                    _loggerService.Error($"Failed to rebuild {redparent} with buffers");
+                }
+
+                return result;
             }
         }
 
@@ -106,6 +218,7 @@ namespace WolvenKit.Modkit.RED4
                 var ext = fi.TrimmedExtension();
                 if (!Enum.TryParse(ext, true, out ERawFileFormat extAsEnum))
                 {
+                    failsCount++;
                     continue;
                 }
 
@@ -208,8 +321,6 @@ namespace WolvenKit.Modkit.RED4
         private static ECookedFileFormat FromRawExtension(ERawFileFormat rawextension) =>
             rawextension switch
             {
-                ERawFileFormat.tga => ECookedFileFormat.xbm,
-                ERawFileFormat.dds => ECookedFileFormat.xbm,
                 ERawFileFormat.fbx => ECookedFileFormat.mesh,
                 ERawFileFormat.gltf => ECookedFileFormat.mesh,
                 ERawFileFormat.glb => ECookedFileFormat.mesh,
@@ -275,63 +386,72 @@ namespace WolvenKit.Modkit.RED4
             else
             {
                 _loggerService.Warning($"{rawRelative.Name} - Direct xbm importing is not implemented");
-                return false;
+
+
+
+
+                // read dds metadata
+                var metadata = DDSUtils.ReadHeader(ddsPath);
+                var width = metadata.Width;
+                var height = metadata.Height;
+
+                // create cr2wfile
+                var red = new CR2WFile();
+                red.Buffers.Add(new CR2WBufferWrapper(new CR2WBuffer()));
+                // create xbm chunk
+                var xbm = new CBitmapTexture(red, null, "CBitmapTexture");
+                xbm.CookingPlatform = new CEnum<Enums.ECookingPlatform>(red, xbm, "cookingPlatform")
+                {
+                    Value = Enums.ECookingPlatform.PLATFORM_PC,
+                    IsSerialized = true
+                };
+                xbm.Width = new CUInt32(red, xbm, "width") { Value = width, IsSerialized = true };
+                xbm.Height = new CUInt32(red, xbm, "height") { Value = height, IsSerialized = true };
+                xbm.Setup = new STextureGroupSetup(red, xbm, "setup")
+                {
+                    IsSerialized = true
+                };
+                SetTextureGroupSetup(xbm.Setup, red);
+                xbm.RenderResourceBlob = new CHandle<IRenderResourceBlob>(red, xbm, "renderTextureResource")
+                    .SetValue(2) as CHandle<IRenderResourceBlob>;
+
+                // create rendRenderTextureBlobPC chunk
+                var blob = new rendRenderTextureBlobPC(red, null, "rendRenderTextureBlobPC");
+                blob.Header = new rendRenderTextureBlobHeader(red, blob.ParentVar as CVariable, "header")
+                {
+                    IsSerialized = true
+                };
+                blob.TextureData = new serializationDeferredDataBuffer(red, blob.ParentVar as CVariable, "textureData")
+                    .SetValue(1) as serializationDeferredDataBuffer;
+
+
+
+                // kraken ddsfile
+                // remove dds header
+
+                // compress file
+
+                // append to cr2wfile
+
+                // update cr2w headers
+
+                throw new NotImplementedException();
             }
-
-
-
-            // read dds metadata
-#pragma warning disable 162
-            var metadata = DDSUtils.ReadHeader(ddsPath);
-            var width = metadata.Width;
-            var height = metadata.Height;
-
-            // create cr2wfile
-            var cr2w = new CR2WFile();
-            // create xbm chunk
-            var xbm = new CBitmapTexture(cr2w, null, "CBitmapTexture");
-            xbm.Width = new CUInt32(cr2w, xbm, "width") { Value = width, IsSerialized = true };
-            xbm.Height = new CUInt32(cr2w, xbm, "height") { Value = height, IsSerialized = true };
-            xbm.CookingPlatform = new CEnum<Enums.ECookingPlatform>(cr2w, xbm, "cookingPlatform"){ Value = Enums.ECookingPlatform.PLATFORM_PC, IsSerialized = true };
-            xbm.Setup = new STextureGroupSetup(cr2w, xbm, "setup")
-            {
-                IsSerialized = true
-            };
-            SetTextureGroupSetup();
-
-
-
-            // populate with dds metadata
-
-
-
-            // kraken ddsfile
-            // remove dds header
-
-            // compress file
-
-            // append to cr2wfile
-
-            // update cr2w headers
-
-            throw new NotImplementedException();
-#pragma warning restore 162
-
 
             #region local functions
 
-            void SetTextureGroupSetup()
+            void SetTextureGroupSetup(STextureGroupSetup setup, CR2WFile cr2w)
             {
                 // first check the user-texture group
                 var (compression, rawformat, flags) = CommonFunctions.GetRedFormatsFromTextureGroup(args.TextureGroup);
-                xbm.Setup.Group = new CEnum<Enums.GpuWrapApieTextureGroup>(cr2w, xbm, "group")
+                setup.Group = new CEnum<Enums.GpuWrapApieTextureGroup>(cr2w, setup.ParentVar as CVariable, "group")
                 {
                     IsSerialized = true,
                     Value = args.TextureGroup
                 };
                 if (flags is CommonFunctions.ETexGroupFlags.Both or CommonFunctions.ETexGroupFlags.CompressionOnly)
                 {
-                    xbm.Setup.Compression = new CEnum<Enums.ETextureCompression>(cr2w, xbm, "setup")
+                    setup.Compression = new CEnum<Enums.ETextureCompression>(cr2w, setup.ParentVar as CVariable, "setup")
                     {
                         IsSerialized = true,
                         Value = compression
@@ -340,7 +460,7 @@ namespace WolvenKit.Modkit.RED4
 
                 if (flags is CommonFunctions.ETexGroupFlags.Both or CommonFunctions.ETexGroupFlags.RawFormatOnly)
                 {
-                    xbm.Setup.RawFormat = new CEnum<Enums.ETextureRawFormat>(cr2w, xbm, "rawFormat")
+                    setup.RawFormat = new CEnum<Enums.ETextureRawFormat>(cr2w, setup.ParentVar as CVariable, "rawFormat")
                     {
                         IsSerialized = true,
                         Value = rawformat
@@ -377,7 +497,7 @@ namespace WolvenKit.Modkit.RED4
 
         }
 
-        private static string FindRedFile(RedRelativePath rawRelPath,  DirectoryInfo outDir)
+        private static string FindRedFile(RedRelativePath rawRelPath,  DirectoryInfo outDir, string overrideExt = null)
         {
             var ext = rawRelPath.Extension;
             if (!Enum.TryParse(ext, true, out ERawFileFormat extAsEnum))
@@ -386,7 +506,9 @@ namespace WolvenKit.Modkit.RED4
             }
             var redfile = new RedRelativePath(rawRelPath)
                 .ChangeBaseDir(outDir)
-                .ChangeExtension(FromRawExtension(extAsEnum).ToString());
+                .ChangeExtension(string.IsNullOrEmpty(overrideExt)
+                    ? FromRawExtension(extAsEnum).ToString()
+                    : overrideExt );
 
             return !File.Exists(redfile.FullPath) ? "" : redfile.FullPath;
         }
@@ -407,7 +529,7 @@ namespace WolvenKit.Modkit.RED4
                 using var redFs = new FileStream(redfile, FileMode.Open, FileAccess.ReadWrite);
                 try
                 {
-                    var result = _meshimporter.Import(rawRelative.ToFileInfo(), redFs);
+                    var result = ImportMesh(rawRelative.ToFileInfo(), redFs,args.Archive);
 
                     if (result)
                     {
