@@ -1,5 +1,10 @@
 using System;
 using System.Numerics;
+using System.IO;
+using System.Text;
+using System.Collections.Generic;
+using System.Linq;
+
 
 namespace WolvenKit.Modkit.RED4.GeneralStructs
 {
@@ -140,4 +145,157 @@ namespace WolvenKit.Modkit.RED4.GeneralStructs
             return w;
         }
     }
-}
+    public static class ReaderExtensions
+    {
+        public static void seek(this BinaryReader br, long ptr = 0)
+        {
+            if ((ptr >= 0) && (ptr < br.BaseStream.Length))
+                br.BaseStream.Position = ptr;
+        }
+        public static BinaryReader readBuffer(this byte[] b, long ptr = 0)
+        {
+            var br = new BinaryReader(new MemoryStream(b));
+            if (ptr > 0)
+                br.BaseStream.Position = ptr;
+            return br;
+        }
+        public static byte[] getBytes(this WolvenKit.RED4.CR2W.Types.CArray<WolvenKit.RED4.CR2W.Types.CUInt8> byteArray)
+        {
+            return byteArray.Select(_ => _.Value).ToArray();
+        }
+        public static string ReadString(this byte[] b, long ptr = 0, int len = 0)
+        {
+            var s = ASCIIEncoding.ASCII.GetString(b, (int)ptr, len);
+            return s;
+        }
+        public static uint ReadUInt16(this byte[] b, long ptr = 0)
+        {
+            using var br = new BinaryReader(new MemoryStream(b));
+            if (ptr > 0)
+                br.BaseStream.Position = ptr;
+            var n = br.ReadUInt16();
+            return n;
+        }
+        public static uint ReadUInt32(this byte[] b, long ptr = 0)
+        {
+            using var br = new BinaryReader(new MemoryStream(b));
+            if (ptr > 0)
+                br.BaseStream.Position = ptr;
+            var n = br.ReadUInt32();
+            return n;
+        }
+        public static List<int> ReadUInt16(this BinaryReader br, int len)
+        {
+            var vals = new List<int>();
+            for (int i = 0; i < len; i++)
+            {
+                vals.Add(br.ReadUInt16());
+            }
+            return vals;
+        }
+        public static List<uint> ReadUInt32(this BinaryReader br, int len)
+        {
+            var vals = new List<uint>();
+            for (int i = 0; i < len; i++)
+            {
+                vals.Add(br.ReadUInt32());
+            }
+            return vals;
+        }
+        public static float readFloat16(this BinaryReader br)
+        {
+            ushort f = br.ReadUInt16();
+            if (f == 0)
+                return 1.0f;
+            return (float)((32767.0f - f) * (1 / 32768.0f));
+        }
+        /// <summary>
+        /// Packed 48 Bit Quaternion
+        /// </summary>
+        public static Quaternion readQuat48(this BinaryReader br)
+        {
+            ushort X = br.ReadUInt16();
+            ushort Y = br.ReadUInt16();
+            ushort Z = br.ReadUInt16();
+
+            float FX = ((int)X - 32767) / 32767.0f;
+            float FY = ((int)Y - 32767) / 32767.0f;
+            float FZ = ((int)Z - 32767) / 32767.0f;
+            float WSquared = 1.0f - FX * FX - FY * FY - FZ * FZ;
+            float W = WSquared > 0.0f ? (float)Math.Sqrt(WSquared) : 0.0f;
+
+            return new Quaternion(FX, FY, FZ, W);
+        }
+        /// <summary>
+        /// Packed 48 Bit Quaternion
+        /// </summary>
+        public static Quaternion readQuat48(this BinaryReader br, bool SignedW = false)
+        {
+            ushort X = br.ReadUInt16();
+            ushort Y = br.ReadUInt16();
+            ushort Z = br.ReadUInt16();
+
+            float FX = ((int)X - 32767) / 32767.0f;
+            float FY = ((int)Y - 32767) / 32767.0f;
+            float FZ = ((int)Z - 32767) / 32767.0f;
+
+            float d = (FX * FX) + (FY * FY) + (FZ * FZ);
+            float s = (float)Math.Sqrt(2.0f - d);
+            FX *= s;
+            FY *= s;
+            FZ *= s;
+            float W = 1.0f - d;
+            W = (SignedW) ? -W : W;
+            return new Quaternion(FX, FY, FZ, W);
+        }
+        /// <summary>
+        /// XYZ stripped W
+        /// </summary>
+        public static Quaternion readQuatXYZ(this BinaryReader br)
+        {
+            float X = br.ReadSingle();
+            float Y = br.ReadSingle();
+            float Z = br.ReadSingle();
+            float WSquared = 1.0f - X * X - Y * Y - Z * Z;
+            float W = WSquared > 0.0f ? (float)Math.Sqrt(WSquared) : 0.0f;
+            return new Quaternion(X, Y, Z, W);
+        }
+        /// <summary>
+        /// XYZ stripped W
+        /// </summary>
+        public static Quaternion readQuatXYZ(this BinaryReader br, bool SignedW = false)
+        {
+
+            float X = br.ReadSingle();
+            float Y = br.ReadSingle();
+            float Z = br.ReadSingle();
+            float d = (X * X) + (Y * Y) + (Z * Z);
+            float s = (float)Math.Sqrt(2.0f - d);
+            X *= s;
+            Y *= s;
+            Z *= s;
+            float W = 1.0f - d;
+            W = (SignedW) ? -W : W;
+            return new Quaternion(X, Y, Z, W);
+        }
+        public static Quaternion readQuat(this BinaryReader br)
+        {
+            return new Quaternion(br.ReadSingle(), br.ReadSingle(), br.ReadSingle(), br.ReadSingle());
+        }
+        public static Vector3 readVec3(this BinaryReader br)
+        {
+            float X = br.ReadSingle();
+            float Y = br.ReadSingle();
+            float Z = br.ReadSingle();
+            return new Vector3(X, Y, Z);
+        }
+        /// <summary>
+        /// Anim Keyframe Time
+        /// </summary>
+        public static float readDeltaTime(this BinaryReader br, float duration)
+        {
+            var dtime2 = (int)(br.ReadUInt16());
+            return ((float)dtime2 / 0xFFFF) * duration;
+        }
+    }
+ }

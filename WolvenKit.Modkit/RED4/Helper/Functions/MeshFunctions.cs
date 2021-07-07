@@ -815,7 +815,7 @@ namespace CP77.CR2W
                         }
                         if (!found)
                         {
-                            throw new Exception("Bone: " + Bones.Names[Meshes[i].boneindices[e, eye]] + " is not present in the Provided .rig(s).\nInput .rig(s) are incompatible or incomplete, Please provide a/more compatible .rig(s)\nTIP: 1. For body .rig(s) provide {BodyType}_base_deformations.rig instead of {BodyType}_base.rig.\n2. if Input .mesh(s) contains any dangle/physics bones, provide the compatible dangle.rig also.\n");
+                           // throw new Exception("Bone: " + Bones.Names[Meshes[i].boneindices[e, eye]] + " is not present in the Provided .rig(s).\nInput .rig(s) are incompatible or incomplete, Please provide a/more compatible .rig(s)\nTIP: 1. For body .rig(s) provide {BodyType}_base_deformations.rig instead of {BodyType}_base.rig.\n2. if Input .mesh(s) contains any dangle/physics bones, provide the compatible dangle.rig also.\n");
                         }
                     }
                 }

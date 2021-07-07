@@ -210,7 +210,27 @@ namespace WolvenKit.Common
         texarray,
         morphtarget,
         fnt,
-        opusinfo
+        opusinfo,
+
+        facialsetup,
+        anims
+    }
+
+    public enum EBaseEntityType
+    {
+        ManAverage,//base\characters\base_entities\man_base\man_base.ent, ma
+        ManBig,//base\characters\base_entities\man_big\man_big.ent, mb
+        ManMassive,//base\characters\base_entities\man_massive\man_massive.ent, mm
+        ManFat,//base\characters\base_entities\man_fat\man_fat.ent, mf
+        ManOld,//base\characters\base_entities\man_small\man_small.ent,
+        ManSmall,//base\characters\base_entities\man_small\man_small.ent,
+        ManChild,//base\characters\base_entities\man_child\man_child.ent, mc
+        WomanAverage,//base\characters\base_entities\woman_base\woman_base.ent, wa
+        WomanBig,//base\characters\base_entities\woman_big\woman_big.ent, wf
+        WomanFat,//base\characters\base_entities\man_fat\man_fat.ent,
+        WomanOld,//base\characters\base_entities\woman_small\woman_small.ent,
+        WomanSmall,//base\characters\base_entities\woman_small\woman_small.ent,
+        WomanChild,//base\characters\base_entities\man_child\man_child.ent, wc
     }
 
     /// <summary>

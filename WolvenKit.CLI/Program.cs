@@ -18,6 +18,9 @@ namespace WolvenKit.CLI
         [STAThread]
         public static void Main(string[] args)
         {
+            var arcdir = @"C:\Program Files (x86)\Steam\steamapps\common\Cyberpunk 2077\archive\pc\content";
+
+            args = new string[] {"unbundle","-p", arcdir , "-w",""};
             // try get oodle dll from game
             if ((RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) && !TryCopyOodleLib())
             {
@@ -183,5 +186,17 @@ namespace WolvenKit.CLI
 
             return true;
         }
+
+        private static string TryGetArchiveDir()
+        {
+            var cp77BinDir = TryGetGameInstallDir();
+            if (string.IsNullOrEmpty(cp77BinDir))
+                return "";
+            var archiveDir = cp77BinDir.Replace("bin\\x64", "archive\\pc\\content");
+            return Directory.Exists(archiveDir) ? archiveDir : "";
+        }
+
+        public static string GameInstallDir { get { return TryGetGameInstallDir(); } }
+        public static string GameArchiveDir { get { return TryGetArchiveDir(); } }
     }
 }

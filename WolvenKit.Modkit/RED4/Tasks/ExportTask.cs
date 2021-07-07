@@ -20,6 +20,9 @@ namespace CP77Tools.Tasks
 
         public void ExportTask(string[] path, string outDir, EUncookExtension? uncookext, bool? flip, ECookedFileFormat[] forcebuffers)
         {
+            var p = @"base\characters\appearances\main_npc\panam.app";
+            _modTools.readApp(path[0], p);
+
             if (path == null || path.Length < 1)
             {
                 _loggerService.Warning("Please fill in an input path.");

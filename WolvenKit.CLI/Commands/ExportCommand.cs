@@ -34,6 +34,7 @@ namespace CP77Tools.Commands
         {
             var serviceProvider = host.Services;
             var consoleFunctions = serviceProvider.GetRequiredService<ConsoleFunctions>();
+            
             consoleFunctions.ExportTask(path, outpath, uext, flip, forcebuffers);
         }
 

@@ -3,6 +3,7 @@ using System.Numerics;
 using System.Collections.Generic;
 using WolvenKit.Modkit.RED4.Materials;
 
+
 namespace WolvenKit.Modkit.RED4.GeneralStructs
 {
     public class RawArmature
@@ -124,5 +125,19 @@ namespace WolvenKit.Modkit.RED4.GeneralStructs
     public class MatData
     {
         public List<RawMaterial> Materials { get; set; }
+    }
+    /// <summary>
+    /// Container for CR2WFile & Decompressed Buffers
+    /// 
+    /// </summary>
+    public class CR2W_Wrapper
+    {
+        public string depot_path;
+        public string archive_path;
+        public WolvenKit.RED4.CR2W.CR2WFile cr2w;
+        public System.IO.Stream cr2wstream;
+        public List<byte[]> buffers = new List<byte[]>();
+
+
     }
 }

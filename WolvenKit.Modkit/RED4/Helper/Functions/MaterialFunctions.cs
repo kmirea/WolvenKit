@@ -29,6 +29,102 @@ namespace WolvenKit.Modkit.RED4
     /// </summary>
     public partial class ModTools
     {
+        public bool ExportMultiMeshWithRigMats(List<Stream> meshStreamS, List<Stream> rigStreamS, FileInfo outfile, List<Archive> archives, string matRepo, EUncookExtension eUncookExtension = EUncookExtension.dds, bool isGLBinary = true, bool LodFilter = true)
+        {
+            List<RawArmature> Rigs = new List<RawArmature>();
+            rigStreamS = rigStreamS.OrderByDescending(r => r.Length).ToList();  // not so smart hacky method to get bodybase rigs on top/ orderby descending
+            for (int r = 0; r < rigStreamS.Count; r++)
+            {
+                
+                //RawArmature Rig = _rig.ProcessRig(rigStreamS[r]);
+                //Rigs.Add(Rig);
+            }
+            //RawArmature expRig = RIG.CombineRigs(Rigs);
+
+            
+
+            List<RawMeshContainer> expMeshes = new List<RawMeshContainer>();
+
+            DirectoryInfo outDir = new DirectoryInfo(Path.Combine(outfile.DirectoryName, Path.GetFileNameWithoutExtension(outfile.FullName)));
+
+            List<RawMaterial> RawMaterials = new List<RawMaterial>();
+            List<Setup> MaterialSetups = new List<Setup>();
+            List<Template> MaterialTemplates = new List<Template>();
+            List<HairProfile> HairProfiles = new List<HairProfile>();
+            List<string> TexturesList = new List<string>();
+
+            for (int m = 0; m < meshStreamS.Count; m++)
+            {
+                var cr2w = _wolvenkitFileService.TryReadRED4File(meshStreamS[m]);
+                if (cr2w == null || !cr2w.Chunks.Select(_ => _.Data).OfType<CMesh>().Any() || !cr2w.Chunks.Select(_ => _.Data).OfType<rendRenderMeshBlob>().Any())
+                {
+                    continue;
+                }
+
+                MemoryStream ms = MeshTools.GetMeshBufferStream(meshStreamS[m], cr2w);
+                MeshesInfo meshinfo = MeshTools.GetMeshesinfo(cr2w);
+
+                MeshTools.MeshBones bones = new MeshTools.MeshBones();
+
+                CMesh cmesh = cr2w.Chunks.Select(_ => _.Data).OfType<CMesh>().First();
+
+                if (cmesh.BoneNames.Count != 0)    // for rigid meshes
+                {
+                    bones.Names = RIG.GetboneNames(cr2w, "CMesh");
+                    bones.WorldPosn = MeshTools.GetMeshBonesPosn(cr2w);
+                }
+                RawArmature Rig = MeshTools.GetNonParentedRig(bones);
+
+                List<RawMeshContainer> Meshes = MeshTools.ContainRawMesh(ms, meshinfo, LodFilter);
+
+                for (int i = 0; i < Meshes.Count; i++)
+                {
+                    Meshes[i].name = m + "_" + Meshes[i].name;
+                    if (cmesh.BoneNames.Count == 0)    // for rigid meshes
+                        Meshes[i].weightcount = 0;
+                }
+                MeshTools.UpdateMeshJoints(ref Meshes, Rig, bones);
+
+                expMeshes.AddRange(Meshes);
+
+                Rigs.Add(Rig);
+
+                ParseMaterials2(cr2w, meshStreamS[m], outDir, archives, matRepo,
+                    ref RawMaterials, ref MaterialSetups, ref MaterialTemplates, ref HairProfiles, ref TexturesList, eUncookExtension);
+            }
+
+            var obj = new { MaterialRepo = matRepo, Materials = RawMaterials, HairProfiles = HairProfiles, MaterialSetups = MaterialSetups, MaterialTemplates = MaterialTemplates };
+
+            var settings = new JsonSerializerSettings();
+            settings.NullValueHandling = NullValueHandling.Ignore;
+            settings.Formatting = Formatting.Indented;
+
+            string str = JsonConvert.SerializeObject(obj, settings);
+
+            File.WriteAllLines(Path.Combine(outDir.FullName, "Textures.txt"), TexturesList);
+            File.WriteAllText(Path.Combine(outDir.FullName, "Material.json"), str);
+
+            RawArmature expRig = RIG.CombineRigs(Rigs);
+            ModelRoot model = MeshTools.RawMeshesToGLTF(expMeshes, expRig);
+
+
+            if (isGLBinary)
+                model.SaveGLB(outfile.FullName);
+            else
+                model.SaveGLTF(outfile.FullName);
+
+            for (int i = 0; i < meshStreamS.Count; i++)
+            {
+                meshStreamS[i].Dispose();
+                meshStreamS[i].Close();
+            }
+            for (int i = 0; i < rigStreamS.Count; i++)
+            {
+                rigStreamS[i].Dispose();
+                rigStreamS[i].Close();
+            }
+            return true;
+        }
         public bool ExportMeshWithMaterials(Stream meshStream, FileInfo outfile, List<Archive> archives,string matRepo, EUncookExtension eUncookExtension = EUncookExtension.dds, bool isGLBinary = true, bool LodFilter = true)
         {
             if (matRepo == null)
@@ -244,6 +340,7 @@ namespace WolvenKit.Modkit.RED4
                 }
             }
         }
+
         private void ParseMaterials(CR2WFile cr2w ,Stream meshStream, DirectoryInfo outDir, List<Archive> archives,string matRepo, EUncookExtension eUncookExtension = EUncookExtension.dds)
         {
             List<string> primaryDependencies = new List<string>();
@@ -440,6 +537,194 @@ namespace WolvenKit.Modkit.RED4
             File.WriteAllLines(Path.Combine(outDir.FullName,"Textures.txt"), TexturesList);
             File.WriteAllText(Path.Combine(outDir.FullName,"Material.json"), str);
 
+        }
+
+       private void ParseMaterials2(CR2WFile cr2w, Stream meshStream, DirectoryInfo outDir, List<Archive> archives, string matRepo,
+            ref List<RawMaterial> RawMaterials, ref List<Setup> MaterialSetups, ref List<Template> MaterialTemplates, ref List<HairProfile> HairProfiles,ref List<string> TexturesList, EUncookExtension eUncookExtension = EUncookExtension.dds)
+        {
+             List<string> primaryDependencies = new List<string>();
+
+            List<string> materialEntryNames = new List<string>();
+            List<CMaterialInstance> materialEntries = new List<CMaterialInstance>();
+
+            GetMateriaEntries(cr2w, meshStream, ref primaryDependencies, ref materialEntryNames, ref materialEntries, archives);
+
+            List<string> mlSetupNames = new List<string>();
+            List<Multilayer_Setup> mlSetups = new List<Multilayer_Setup>();
+
+            List<string> mlTemplateNames = new List<string>();
+            List<Multilayer_LayerTemplate> mlTemplates = new List<Multilayer_LayerTemplate>();
+
+            //List<HairProfile> HairProfiles = new List<HairProfile>();
+            List<string> HairProfileNames = new List<string>();
+
+            //List<string> TexturesList = new List<string>();
+
+            var exportArgs =
+                new GlobalExportArgs().Register(
+                    new XbmExportArgs() { UncookExtension = eUncookExtension },
+                    new MlmaskExportArgs() { UncookExtension = eUncookExtension }
+                );
+
+            for (int i = 0; i < primaryDependencies.Count; i++)
+            {
+
+                if (Path.GetExtension(primaryDependencies[i]) == ".xbm")
+                {
+                    if (!TexturesList.Contains(primaryDependencies[i]))
+                        TexturesList.Add(primaryDependencies[i]);
+
+                    ulong hash = FNV1A64HashAlgorithm.HashString(primaryDependencies[i]);
+                    foreach (Archive ar in archives)
+                    {
+                        if (ar.Files.ContainsKey(hash))
+                        {
+                            if (!File.Exists(Path.Combine(matRepo, primaryDependencies[i].Replace("xbm", exportArgs.Get<XbmExportArgs>().UncookExtension.ToString()))))
+                            {
+                                if (Directory.Exists(matRepo))
+                                    UncookSingle(ar, hash, new DirectoryInfo(matRepo), exportArgs);
+                            }
+                            break;
+                        }
+
+                    }
+                }
+                if (Path.GetExtension(primaryDependencies[i]) == ".mlmask")
+                {
+                    if (!TexturesList.Contains(primaryDependencies[i]))
+                        TexturesList.Add(primaryDependencies[i]);
+                    ulong hash = FNV1A64HashAlgorithm.HashString(primaryDependencies[i]);
+                    foreach (Archive ar in archives)
+                    {
+                        if (ar.Files.ContainsKey(hash))
+                        {
+                            if (!File.Exists(Path.Combine(matRepo, primaryDependencies[i].Replace(".mlmask", $"_0.{exportArgs.Get<XbmExportArgs>().UncookExtension.ToString()}"))))
+                            {
+                                if (Directory.Exists(matRepo))
+                                    UncookSingle(ar, hash, new DirectoryInfo(matRepo), exportArgs);
+                            }
+                            break;
+                        }
+                    }
+
+                }
+
+                if (Path.GetExtension(primaryDependencies[i]) == ".hp")
+                {
+                    if (!HairProfileNames.Contains(Path.GetFileName(primaryDependencies[i])))
+                    {
+                        HairProfileNames.Add(Path.GetFileName(primaryDependencies[i]));
+                        ulong hash = FNV1A64HashAlgorithm.HashString(primaryDependencies[i]);
+                        foreach (Archive ar in archives)
+                        {
+                            if (ar.Files.ContainsKey(hash))
+                            {
+                                var ms = new MemoryStream();
+                                ExtractSingleToStream(ar, hash, ms);
+                                var hp = _wolvenkitFileService.TryReadCr2WFile(ms);
+                                HairProfiles.Add(new HairProfile(hp.Chunks[0].Data as CHairProfile, Path.GetFileName(primaryDependencies[i])));
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (Path.GetExtension(primaryDependencies[i]) == ".mlsetup")
+                {
+                    ulong hash = FNV1A64HashAlgorithm.HashString(primaryDependencies[i]);
+                    foreach (Archive ar in archives)
+                    {
+                        if (ar.Files.ContainsKey(hash))
+                        {
+                            var ms = new MemoryStream();
+                            ExtractSingleToStream(ar, hash, ms);
+                            var mls = _wolvenkitFileService.TryReadCr2WFile(ms);
+                            mlSetupNames.Add(Path.GetFileName(primaryDependencies[i]));
+                            mlSetups.Add(mls.Chunks[0].Data as Multilayer_Setup);
+
+                            for (int e = 0; e < mls.Imports.Count; e++)
+                            {
+                                if (Path.GetExtension(mls.Imports[e].DepotPathStr) == ".xbm")
+                                {
+                                    if (!TexturesList.Contains(mls.Imports[e].DepotPathStr))
+                                        TexturesList.Add(mls.Imports[e].DepotPathStr);
+
+                                    ulong hash1 = FNV1A64HashAlgorithm.HashString(mls.Imports[e].DepotPathStr);
+                                    foreach (Archive arr in archives)
+                                    {
+                                        if (arr.Files.ContainsKey(hash1))
+                                        {
+                                            if (!File.Exists(Path.Combine(matRepo, mls.Imports[e].DepotPathStr.Replace("xbm", exportArgs.Get<XbmExportArgs>().UncookExtension.ToString()))))
+                                            {
+                                                if (Directory.Exists(matRepo))
+                                                    UncookSingle(arr, hash1, new DirectoryInfo(matRepo), exportArgs);
+                                            }
+                                            break;
+                                        }
+                                    }
+                                }
+                                if (Path.GetExtension(mls.Imports[e].DepotPathStr) == ".mltemplate")
+                                {
+                                    ulong hash2 = FNV1A64HashAlgorithm.HashString(mls.Imports[e].DepotPathStr);
+                                    foreach (Archive arr in archives)
+                                    {
+                                        if (arr.Files.ContainsKey(hash2))
+                                        {
+                                            var mss = new MemoryStream();
+                                            ExtractSingleToStream(arr, hash2, mss);
+
+                                            var mlt = _wolvenkitFileService.TryReadCr2WFile(mss);
+                                            mlTemplateNames.Add(Path.GetFileName(mls.Imports[e].DepotPathStr));
+                                            mlTemplates.Add(mlt.Chunks[0].Data as Multilayer_LayerTemplate);
+
+                                            for (int eye = 0; eye < mlt.Imports.Count; eye++)
+                                            {
+                                                if (!TexturesList.Contains(mlt.Imports[eye].DepotPathStr))
+                                                    TexturesList.Add(mlt.Imports[eye].DepotPathStr);
+
+                                                ulong hash3 = FNV1A64HashAlgorithm.HashString(mlt.Imports[eye].DepotPathStr);
+                                                foreach (Archive arrr in archives)
+                                                {
+                                                    if (arrr.Files.ContainsKey(hash3))
+                                                    {
+                                                        if (!File.Exists(Path.Combine(matRepo, mlt.Imports[eye].DepotPathStr.Replace("xbm", exportArgs.Get<XbmExportArgs>().UncookExtension.ToString()))))
+                                                        {
+                                                            if (Directory.Exists(matRepo))
+                                                                UncookSingle(arrr, hash3, new DirectoryInfo(matRepo), exportArgs);
+                                                        }
+                                                        break;
+                                                    }
+                                                }
+                                            }
+                                            break;
+                                        }
+                                    }
+                                }
+
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+
+            //List<RawMaterial> RawMaterials = new List<RawMaterial>();
+            for (int i = 0; i < materialEntries.Count; i++)
+            {
+                RawMaterials.Add(ContainRawMaterial(materialEntries[i], materialEntryNames[i], archives));
+            }
+
+            //List<Setup> MaterialSetups = new List<Setup>();
+            for (int i = 0; i < mlSetups.Count; i++)
+            {
+                MaterialSetups.Add(new Setup(mlSetups[i], mlSetupNames[i]));
+            }
+
+            //List<Template> MaterialTemplates = new List<Template>();
+            for (int i = 0; i < mlTemplates.Count; i++)
+            {
+                MaterialTemplates.Add(new Template(mlTemplates[i], mlTemplateNames[i]));
+            }
         }
         private RawMaterial ContainRawMaterial(CMaterialInstance cMaterialInstance, string Name, List<Archive> archives)
         {

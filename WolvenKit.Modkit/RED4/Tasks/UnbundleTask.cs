@@ -15,6 +15,9 @@ namespace CP77Tools.Tasks
         public void UnbundleTask(string[] path, string outpath,
             string hash, string pattern, string regex, bool DEBUG_decompress = false)
         {
+            var p = @"base\characters\appearances\main_npc\panam.app";
+            _modTools.readApp(path[0], p);
+
             if (path == null || path.Length < 1)
             {
                 _loggerService.Warning("Please fill in an input path.");
