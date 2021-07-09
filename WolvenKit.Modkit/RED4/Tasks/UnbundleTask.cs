@@ -17,7 +17,7 @@ namespace CP77Tools.Tasks
         {
             var p = @"base\characters\appearances\main_npc\panam.app";
             _modTools.readApp(path[0], p);
-
+            
             if (path == null || path.Length < 1)
             {
                 _loggerService.Warning("Please fill in an input path.");

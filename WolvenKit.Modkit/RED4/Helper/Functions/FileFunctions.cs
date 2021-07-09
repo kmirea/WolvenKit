@@ -372,14 +372,15 @@ namespace WolvenKit.Modkit.RED4
                             var baseRig = @"base\characters\base_entities\" + bodyType + @"\"+ bodyType + @".rig";
                             var deformRig = @"base\characters\base_entities\" + bodyType + @"\deformations_rigs\" + bodyType + @"_deformations.rig";
                             var brig = LoadSingleFile(path, baseRig, false);
-                            if (brig.cr2w != null)
-                            {
-                                rigStreams.Add(brig);
-                            }
+                            
                             var drig = LoadSingleFile(path, deformRig, false);
                             if (drig.cr2w != null)
                             {
                                 rigStreams.Add(drig);
+                            }
+                            if (brig.cr2w != null)
+                            {
+                                rigStreams.Add(brig);
                             }
                         }
                         #endregion
@@ -408,6 +409,29 @@ namespace WolvenKit.Modkit.RED4
                                             meshFiles = ck.Dependencies.Elements.Where(_ => _.DepotPath.EndsWith("mesh")).Select(_ => _.DepotPath).ToList();
                                             foreach (var mshpath in meshFiles)
                                             {
+                                                var mfn = new FileInfo(mshpath).Name;
+                                                if(mfn.StartsWith("h0_"))
+                                                {
+
+                                                    var headRigPath = mshpath.Substring(0, mshpath.Length-5) + "_skeleton.rig";
+                                                    var facialSetupPath = mshpath.Substring(0, mshpath.Length - 5) + "_rigsetup.facialsetup";
+                                                    var headRig = LoadSingleFile(path, headRigPath, false);
+                                                    if (headRig.cr2w != null)
+                                                    {
+                                                        rigStreams.Add(headRig);
+                                                    }
+                                                    var headSetup = LoadSingleFile(path, facialSetupPath, true);
+                                                    if (headSetup.cr2w != null)
+                                                    {
+                                                        ss = "l;";
+                                                        //rigStreams.Add(headSetup);
+                                                    }
+                                                    ss = "l;";
+                                                }
+                                            }
+                                            foreach (var mshpath in meshFiles)
+                                            {
+
                                                 var cmsh = LoadSingleFile(path, mshpath, false);
                                                // var s = new MemoryStream(cmsh.cr2wstream.)
                                                 if(cmsh.cr2w != null)

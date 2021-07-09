@@ -31,22 +31,21 @@ namespace WolvenKit.Modkit.RED4
     {
         public bool ExportMultiMeshWithRigMats(List<Stream> meshStreamS, List<Stream> rigStreamS, FileInfo outfile, List<Archive> archives, string matRepo, EUncookExtension eUncookExtension = EUncookExtension.dds, bool isGLBinary = true, bool LodFilter = true)
         {
+            var _rig = new RIG(_wolvenkitFileService);
             List<RawArmature> Rigs = new List<RawArmature>();
             rigStreamS = rigStreamS.OrderByDescending(r => r.Length).ToList();  // not so smart hacky method to get bodybase rigs on top/ orderby descending
             for (int r = 0; r < rigStreamS.Count; r++)
             {
-                
-                //RawArmature Rig = _rig.ProcessRig(rigStreamS[r]);
-                //Rigs.Add(Rig);
+                RawArmature Rig = _rig.ProcessRig(rigStreamS[r]);
+                Rigs.Add(Rig);
             }
-            //RawArmature expRig = RIG.CombineRigs(Rigs);
+            RawArmature expRig = RIG.CombineRigs(Rigs);
 
             
 
             List<RawMeshContainer> expMeshes = new List<RawMeshContainer>();
 
             DirectoryInfo outDir = new DirectoryInfo(Path.Combine(outfile.DirectoryName, Path.GetFileNameWithoutExtension(outfile.FullName)));
-
             List<RawMaterial> RawMaterials = new List<RawMaterial>();
             List<Setup> MaterialSetups = new List<Setup>();
             List<Template> MaterialTemplates = new List<Template>();
@@ -55,6 +54,7 @@ namespace WolvenKit.Modkit.RED4
 
             for (int m = 0; m < meshStreamS.Count; m++)
             {
+                
                 var cr2w = _wolvenkitFileService.TryReadRED4File(meshStreamS[m]);
                 if (cr2w == null || !cr2w.Chunks.Select(_ => _.Data).OfType<CMesh>().Any() || !cr2w.Chunks.Select(_ => _.Data).OfType<rendRenderMeshBlob>().Any())
                 {
@@ -73,7 +73,7 @@ namespace WolvenKit.Modkit.RED4
                     bones.Names = RIG.GetboneNames(cr2w, "CMesh");
                     bones.WorldPosn = MeshTools.GetMeshBonesPosn(cr2w);
                 }
-                RawArmature Rig = MeshTools.GetNonParentedRig(bones);
+                //RawArmature Rig = MeshTools.GetNonParentedRig(bones);
 
                 List<RawMeshContainer> Meshes = MeshTools.ContainRawMesh(ms, meshinfo, LodFilter);
 
@@ -83,11 +83,11 @@ namespace WolvenKit.Modkit.RED4
                     if (cmesh.BoneNames.Count == 0)    // for rigid meshes
                         Meshes[i].weightcount = 0;
                 }
-                MeshTools.UpdateMeshJoints(ref Meshes, Rig, bones);
+                MeshTools.UpdateMeshJoints(ref Meshes, expRig, bones);
 
                 expMeshes.AddRange(Meshes);
 
-                Rigs.Add(Rig);
+                //Rigs.Add(Rig);
 
                 ParseMaterials2(cr2w, meshStreamS[m], outDir, archives, matRepo,
                     ref RawMaterials, ref MaterialSetups, ref MaterialTemplates, ref HairProfiles, ref TexturesList, eUncookExtension);
@@ -104,7 +104,7 @@ namespace WolvenKit.Modkit.RED4
             File.WriteAllLines(Path.Combine(outDir.FullName, "Textures.txt"), TexturesList);
             File.WriteAllText(Path.Combine(outDir.FullName, "Material.json"), str);
 
-            RawArmature expRig = RIG.CombineRigs(Rigs);
+            //RawArmature expRig = RIG.CombineRigs(Rigs);
             ModelRoot model = MeshTools.RawMeshesToGLTF(expMeshes, expRig);
 
 
