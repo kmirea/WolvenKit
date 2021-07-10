@@ -371,9 +371,14 @@ namespace WolvenKit.Modkit.RED4
                             var bodyType = entityTypes[entType];
                             var baseRig = @"base\characters\base_entities\" + bodyType + @"\"+ bodyType + @".rig";
                             var deformRig = @"base\characters\base_entities\" + bodyType + @"\deformations_rigs\" + bodyType + @"_deformations.rig";
+                            var deformRig2 = @"base\characters\base_entities\" + bodyType + @"\deformations_rig\" + bodyType + @"_deformations.rig";
                             var brig = LoadSingleFile(path, baseRig, false);
                             
                             var drig = LoadSingleFile(path, deformRig, false);
+                            if(drig == null)
+                            {
+                                drig = LoadSingleFile(path, deformRig2, false);
+                            }
                             if (drig.cr2w != null)
                             {
                                 rigStreams.Add(drig);
@@ -416,11 +421,15 @@ namespace WolvenKit.Modkit.RED4
                                                     var headRigPath = mshpath.Substring(0, mshpath.Length-5) + "_skeleton.rig";
                                                     var facialSetupPath = mshpath.Substring(0, mshpath.Length - 5) + "_rigsetup.facialsetup";
                                                     var headRig = LoadSingleFile(path, headRigPath, false);
+                                                    if (headRig == null)
+                                                        continue;
                                                     if (headRig.cr2w != null)
                                                     {
                                                         rigStreams.Add(headRig);
                                                     }
                                                     var headSetup = LoadSingleFile(path, facialSetupPath, true);
+                                                    if (headSetup == null)
+                                                        continue;
                                                     if (headSetup.cr2w != null)
                                                     {
                                                         ss = "l;";
@@ -463,7 +472,7 @@ namespace WolvenKit.Modkit.RED4
             {
                 var mstrm = meshStreams.Select(_ => _.cr2wstream).ToList();
                 var rgstrm = rigStreams.Select(_ => _.cr2wstream).ToList();
-                string outP = @"C:\dev\cyberpunk\out\test\multiTest.g";
+                string outP = @"C:\dev\cyberpunk\out\test\smasher.g";
                 //ExportMultiMeshWithRigMats()
                 try
                 {

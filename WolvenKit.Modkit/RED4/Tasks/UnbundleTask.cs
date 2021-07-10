@@ -15,7 +15,7 @@ namespace CP77Tools.Tasks
         public void UnbundleTask(string[] path, string outpath,
             string hash, string pattern, string regex, bool DEBUG_decompress = false)
         {
-            var p = @"base\characters\appearances\main_npc\panam.app";
+            var p = @"base\characters\appearances\boss\boss__adam_smasher_mm.app";
             _modTools.readApp(path[0], p);
             
             if (path == null || path.Length < 1)
