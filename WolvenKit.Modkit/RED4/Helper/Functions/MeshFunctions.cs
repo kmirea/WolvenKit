@@ -93,7 +93,7 @@ namespace CP77.CR2W
             file.Extract(meshStream);
             meshStream.Seek(0, SeekOrigin.Begin);
             var cr2w = _modTools.TryReadRED4File(meshStream);
-
+            
             return ExportMeshWithoutRigPreviewerInner(meshStream, cr2w, FilePath, tempmodels, LodFilter, isGLBinary);
         }
 
@@ -586,7 +586,7 @@ namespace CP77.CR2W
             return meshesInfo;
         }
 
-        public static List<RawMeshContainer> ContainRawMesh(MemoryStream gfs, MeshesInfo info, bool LODFilter)
+        public static List<RawMeshContainer> ContainRawMesh(MemoryStream gfs, MeshesInfo info, bool LODFilter,string meshFile = "")
         {
             BinaryReader gbr = new BinaryReader(gfs);
 
@@ -789,6 +789,11 @@ namespace CP77.CR2W
                     mesh.appNames[e] = info.appearances[e].Name;
                     mesh.materialNames[e] = info.appearances[e].MaterialNames[index];
                 }
+                if(!String.IsNullOrEmpty(meshFile))
+                {
+                    mesh.meshFile = meshFile;
+                    mesh.submeshIdx = index.ToString();
+                }
                 expMeshes.Add(mesh);
             }
             return expMeshes;
@@ -958,7 +963,7 @@ namespace CP77.CR2W
                 }
             }
 
-            var obj = new { appNames = mesh.appNames, materialNames = mesh.materialNames }; // anonymous variable/obj
+            var obj = new { appNames = mesh.appNames, materialNames = mesh.materialNames, meshFile = mesh.meshFile }; // anonymous variable/obj
             expmesh.Extras = SharpGLTF.IO.JsonContent.Serialize(obj);
 
             return expmesh;
@@ -1037,7 +1042,7 @@ namespace CP77.CR2W
                 }
             }
 
-            var obj = new { appNames = mesh.appNames, materialNames = mesh.materialNames }; // anonymous variable/obj
+            var obj = new { appNames = mesh.appNames, materialNames = mesh.materialNames, meshFile = mesh.meshFile }; // anonymous variable/obj
             expmesh.Extras = SharpGLTF.IO.JsonContent.Serialize(obj);
 
             return expmesh;
@@ -1119,7 +1124,7 @@ namespace CP77.CR2W
                 }
             }
 
-            var obj = new { appNames = mesh.appNames, materialNames = mesh.materialNames }; // anonymous variable/obj
+            var obj = new { appNames = mesh.appNames, materialNames = mesh.materialNames, meshFile = mesh.meshFile }; // anonymous variable/obj
             expmesh.Extras = SharpGLTF.IO.JsonContent.Serialize(obj);
 
             return expmesh;

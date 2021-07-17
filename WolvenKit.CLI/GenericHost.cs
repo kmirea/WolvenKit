@@ -57,6 +57,7 @@ namespace WolvenKit.CLI
                     services.AddScoped<MeshTools>();        //RIG, Cp77FileService
 
                     services.AddScoped<ModTools>();         //Cp77FileService, ILoggerService, IProgress, IHashService, Mesh, Target
+                    services.AddScoped<MemTools>();         //Cp77FileService, ILoggerService, IHashService
 
                     //services.AddScoped<MaterialTools>();    //ModTools, Cp77FileService, CookingUtilities
 

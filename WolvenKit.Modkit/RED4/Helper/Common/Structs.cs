@@ -74,6 +74,8 @@ namespace WolvenKit.Modkit.RED4.GeneralStructs
         public UInt32 weightcount { get; set; }
         public string[] appNames { get; set; }
         public string[] materialNames { get; set; }
+        public string meshFile { get; set; }
+        public string submeshIdx { get; set; }
     }
     public class Re4MeshContainer
     {
@@ -137,7 +139,10 @@ namespace WolvenKit.Modkit.RED4.GeneralStructs
         public WolvenKit.RED4.CR2W.CR2WFile cr2w;
         public System.IO.Stream cr2wstream;
         public List<byte[]> buffers = new List<byte[]>();
+        public string appearance { get; set; }
+        public List<string> meshes = new List<string>();
 
+        public List<string> rigs = new List<string>();
 
     }
 }

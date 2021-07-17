@@ -12,6 +12,7 @@ using WolvenKit.Common.Services;
 using WolvenKit.Core.Services;
 using WolvenKit.RED4.CR2W;
 using ModTools = WolvenKit.Modkit.RED4.ModTools;
+using MemTools = WolvenKit.Modkit.RED4.MemTools;
 
 namespace CP77Tools.Tasks
 {
@@ -36,6 +37,7 @@ namespace CP77Tools.Tasks
     {
         private readonly ILoggerService _loggerService;
         private readonly ModTools _modTools;
+        private readonly MemTools _memTools;
         private readonly IHashService _hashService;
         private readonly IProgressService<double> _progressService;
         private readonly Red4ParserService _wolvenkitFileService;
@@ -56,6 +58,7 @@ namespace CP77Tools.Tasks
             IProgressService<double> progress,
             Red4ParserService wolvenkitFileService,
             ModTools modTools,
+            MemTools memTools,
 
             IOptions<CommonImportArgs> commonImportArgs,
             IOptions<XbmImportArgs> xbmImportArgs,
@@ -69,6 +72,7 @@ namespace CP77Tools.Tasks
         {
             _loggerService = loggerService;
             _modTools = modTools;
+            _memTools = memTools;
             _progressService = progress;
             _hashService = hashService;
 

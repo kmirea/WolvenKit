@@ -1,4 +1,6 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using CP77.CR2W;
 using WolvenKit.Common.Services;
 using WolvenKit.Core.Services;
@@ -13,10 +15,9 @@ namespace WolvenKit.Modkit.RED4
         private readonly IHashService _hashService;
         private readonly Red4ParserService _wolvenkitFileService;
         private readonly MeshTools _meshTools;
-        private readonly TargetTools _targetTools;
+        private readonly TargetTools _targetTools;        
         //private readonly MaterialTools _materialTools;
-
-
+        
 
         public ModTools(
             ILoggerService loggerService,
@@ -34,6 +35,7 @@ namespace WolvenKit.Modkit.RED4
             _wolvenkitFileService = wolvenkitFileService;
             _meshTools = meshTools;
             _targetTools = targetTools;
+
             //_materialTools = materialTools;
         }
     }

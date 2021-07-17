@@ -29,7 +29,7 @@ namespace WolvenKit.Modkit.RED4
     /// </summary>
     public partial class ModTools
     {
-        public bool ExportMultiMeshWithRigMats(List<Stream> meshStreamS, List<Stream> rigStreamS, FileInfo outfile, List<Archive> archives, string matRepo, EUncookExtension eUncookExtension = EUncookExtension.dds, bool isGLBinary = true, bool LodFilter = true)
+        public bool ExportMultiMeshWithRigMats(List<Stream> meshStreamS, List<Stream> rigStreamS, FileInfo outfile, List<Archive> archives, string matRepo, List<string> meshFiles, EUncookExtension eUncookExtension = EUncookExtension.dds, bool isGLBinary = true, bool LodFilter = true)
         {
             var _rig = new RIG(_wolvenkitFileService);
             List<RawArmature> Rigs = new List<RawArmature>();
@@ -75,7 +75,7 @@ namespace WolvenKit.Modkit.RED4
                 }
                 //RawArmature Rig = MeshTools.GetNonParentedRig(bones);
 
-                List<RawMeshContainer> Meshes = MeshTools.ContainRawMesh(ms, meshinfo, LodFilter);
+                List<RawMeshContainer> Meshes = MeshTools.ContainRawMesh(ms, meshinfo, LodFilter,meshFiles[m]);
 
                 for (int i = 0; i < Meshes.Count; i++)
                 {
@@ -295,9 +295,11 @@ namespace WolvenKit.Modkit.RED4
             }
             foreach(var m in materialEntries)
             {
+                int loopNum = 0;
                 string path = m.BaseMaterial.DepotPath;
                 while(!Path.GetExtension(path).Contains("mt"))
                 {
+                    loopNum++;
                     ulong hash = FNV1A64HashAlgorithm.HashString(path);
                     foreach (Archive ar in archives)
                     {
@@ -317,6 +319,10 @@ namespace WolvenKit.Modkit.RED4
                             }
                             break;
                         }
+                    }
+                    if (loopNum > 1000)
+                    {
+                        break;
                     }
                 }
                 ulong mt = FNV1A64HashAlgorithm.HashString(path);
@@ -736,8 +742,10 @@ namespace WolvenKit.Modkit.RED4
             List<CMaterialInstance> BaseMaterials = new List<CMaterialInstance>();
 
             string path = cMaterialInstance.BaseMaterial.DepotPath;
+            int loopNum = 0;
             while (!Path.GetExtension(path).Contains("mt"))
             {
+                loopNum++;
                 ulong hash = FNV1A64HashAlgorithm.HashString(path);
                 foreach (Archive ar in archives)
                 {
@@ -750,6 +758,10 @@ namespace WolvenKit.Modkit.RED4
                         path = (mi.Chunks[0].Data as CMaterialInstance).BaseMaterial.DepotPath;
                         break;
                     }
+                }
+                if(loopNum > 1000)
+                {
+                    break;
                 }
             }
 

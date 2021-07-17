@@ -16,7 +16,11 @@ namespace CP77Tools.Tasks
             string hash, string pattern, string regex, bool DEBUG_decompress = false)
         {
             var p = @"base\characters\appearances\boss\boss__adam_smasher_mm.app";
-            _modTools.readApp(path[0], p);
+            p = @"base\vehicles\appearances\sport\rayfield_caliburn__basic.app";
+            p = @"base\characters\appearances\main_npc\woodman.app";
+            p = @"base\vehicles\appearances\sport\rayfield_caliburn__basic.app";
+            _memTools.readApp(path[0], p);
+
             
             if (path == null || path.Length < 1)
             {
