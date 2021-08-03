@@ -35,7 +35,7 @@ namespace CP77.CR2W
         }
 
 
-        public string ExportMeshSimple(IGameFile file, string FilePath, string v)
+        public string ExportMeshSimple(IGameFile file, string FilePath, string v,bool LeftHanded = false)
         {
 
             using var meshStream = new MemoryStream();
@@ -51,7 +51,7 @@ namespace CP77.CR2W
 
             var meshinfo = GetMeshesinfo(cr2w);
 
-            var expMeshes = ContainRawMesh(ms, meshinfo, true);
+            var expMeshes = ContainRawMesh(ms, meshinfo, true,"",LeftHanded);
 
             if (!Directory.Exists(v))
                 Directory.CreateDirectory(v);
@@ -105,7 +105,7 @@ namespace CP77.CR2W
             return ExportMeshWithoutRigPreviewerInner(meshStream, cr2w, FilePath, tempmodels, LodFilter, isGLBinary);
         }
 
-        private string ExportMeshWithoutRigPreviewerInner(Stream meshStream, CR2WFile cr2w, string FilePath, string tempmodels, bool LodFilter = true, bool isGLBinary = true)
+        private string ExportMeshWithoutRigPreviewerInner(Stream meshStream, CR2WFile cr2w, string FilePath, string tempmodels, bool LodFilter = true, bool isGLBinary = true, bool LeftHanded = false)
         {
             if (cr2w == null || !cr2w.Chunks.Select(_ => _.Data).OfType<rendRenderMeshBlob>().Any() || !cr2w.Chunks.Select(_ => _.Data).OfType<CMesh>().Any())
             {
@@ -115,7 +115,7 @@ namespace CP77.CR2W
 
             var meshinfo = GetMeshesinfo(cr2w);
 
-            var expMeshes = ContainRawMesh(ms, meshinfo, LodFilter);
+            var expMeshes = ContainRawMesh(ms, meshinfo, LodFilter,"",LeftHanded);
 
             ModelRoot model = RawMeshesToMinimalGLTF(expMeshes);
             string outfile;
@@ -154,7 +154,7 @@ namespace CP77.CR2W
             return outfile;
         }
 
-        public bool ExportMesh(Stream meshStream, FileInfo outfile, bool LodFilter = true, bool isGLBinary = true)
+        public bool ExportMesh(Stream meshStream, FileInfo outfile, bool LodFilter = true, bool isGLBinary = true, bool LeftHanded = false)
         {
             var cr2w = _modTools.TryReadRED4File(meshStream);
 
@@ -175,7 +175,7 @@ namespace CP77.CR2W
             if (meshBones.boneCount != 0)    // for rigid meshes
             {
                 meshBones.Names = RIG.GetboneNames(cr2w, "CMesh");
-                meshBones.WorldPosn = GetMeshBonesPosn(cr2w);
+                meshBones.WorldPosn = GetMeshBonesPosn(cr2w,LeftHanded);
             }
             RawArmature Rig = GetNonParentedRig(meshBones);
 
@@ -183,7 +183,8 @@ namespace CP77.CR2W
 
             MeshesInfo meshinfo = GetMeshesinfo(cr2w);
 
-            List<RawMeshContainer> expMeshes = ContainRawMesh(ms, meshinfo, LodFilter);
+            List<RawMeshContainer> expMeshes = ContainRawMesh(ms, meshinfo, LodFilter, "", LeftHanded);
+            ;
             if (meshBones.boneCount == 0)    // for rigid meshes
             {
                 for (int i = 0; i < expMeshes.Count; i++)
@@ -238,7 +239,7 @@ namespace CP77.CR2W
             }
         }
 
-        public bool ExportMeshWithoutRig(Stream meshStream, FileInfo outfile, bool LodFilter = true, bool isGLBinary = true)
+        public bool ExportMeshWithoutRig(Stream meshStream, FileInfo outfile, bool LodFilter = true, bool isGLBinary = true, bool LeftHanded = false)
         {
             var cr2w = _modTools.TryReadRED4File(meshStream);
 
@@ -256,7 +257,7 @@ namespace CP77.CR2W
 
             MeshesInfo meshinfo = GetMeshesinfo(cr2w);
 
-            List<RawMeshContainer> expMeshes = ContainRawMesh(ms, meshinfo, LodFilter);
+            List<RawMeshContainer> expMeshes = ContainRawMesh(ms, meshinfo, LodFilter,"",LeftHanded);
 
             ModelRoot model = RawMeshesToGLTF(expMeshes, null);
 
@@ -270,7 +271,7 @@ namespace CP77.CR2W
             return true;
         }
 
-        public bool ExportMultiMeshWithoutRig(List<Stream> meshStreamS, FileInfo outfile, bool LodFilter = true, bool isGLBinary = true)
+        public bool ExportMultiMeshWithoutRig(List<Stream> meshStreamS, FileInfo outfile, bool LodFilter = true, bool isGLBinary = true, bool LeftHanded = false)
         {
             List<RawMeshContainer> expMeshes = new List<RawMeshContainer>();
 
@@ -283,7 +284,7 @@ namespace CP77.CR2W
                 MemoryStream ms = GetMeshBufferStream(meshStreamS[m], cr2w);
 
                 MeshesInfo meshinfo = GetMeshesinfo(cr2w);
-                var Meshes = ContainRawMesh(ms, meshinfo, LodFilter);
+                var Meshes = ContainRawMesh(ms, meshinfo, LodFilter,"",LeftHanded);
                 for (int i = 0; i < Meshes.Count; i++)
                     Meshes[i].name = m + "_" + Meshes[i].name;
                 expMeshes.AddRange(Meshes);
@@ -304,7 +305,7 @@ namespace CP77.CR2W
             return true;
         }
 
-        public bool ExportMeshWithRig(Stream meshStream, Stream rigStream, FileInfo outfile, bool LodFilter = true, bool isGLBinary = true)
+        public bool ExportMeshWithRig(Stream meshStream, Stream rigStream, FileInfo outfile, bool LodFilter = true, bool isGLBinary = true, bool LeftHanded = false)
         {
             RawArmature Rig = _rig.ProcessRig(rigStream);
 
@@ -329,10 +330,10 @@ namespace CP77.CR2W
             if (cmesh.BoneNames.Count != 0)    // for rigid meshes
             {
                 bones.Names = RIG.GetboneNames(cr2w, "CMesh");
-                bones.WorldPosn = GetMeshBonesPosn(cr2w);
+                bones.WorldPosn = GetMeshBonesPosn(cr2w,LeftHanded);
             }
 
-            List<RawMeshContainer> expMeshes = ContainRawMesh(ms, meshinfo, LodFilter);
+            List<RawMeshContainer> expMeshes = ContainRawMesh(ms, meshinfo, LodFilter,"",LeftHanded);
 
             if (cmesh.BoneNames.Count == 0)    // for rigid meshes
             {
@@ -356,7 +357,7 @@ namespace CP77.CR2W
             return true;
         }
 
-        public bool ExportMultiMeshWithRig(List<Stream> meshStreamS, List<Stream> rigStreamS, FileInfo outfile, bool LodFilter = true, bool isGLBinary = true)
+        public bool ExportMultiMeshWithRig(List<Stream> meshStreamS, List<Stream> rigStreamS, FileInfo outfile, bool LodFilter = true, bool isGLBinary = true, bool LeftHanded = false)
         {
             List<RawArmature> Rigs = new List<RawArmature>();
             rigStreamS = rigStreamS.OrderByDescending(r => r.Length).ToList();  // not so smart hacky method to get bodybase rigs on top/ orderby descending
@@ -387,10 +388,10 @@ namespace CP77.CR2W
                 if (cmesh.BoneNames.Count != 0)    // for rigid meshes
                 {
                     bones.Names = RIG.GetboneNames(cr2w, "CMesh");
-                    bones.WorldPosn = GetMeshBonesPosn(cr2w);
+                    bones.WorldPosn = GetMeshBonesPosn(cr2w,LeftHanded);
                 }
 
-                List<RawMeshContainer> Meshes = ContainRawMesh(ms, meshinfo, LodFilter);
+                List<RawMeshContainer> Meshes = ContainRawMesh(ms, meshinfo, LodFilter,"",LeftHanded);
 
                 for (int i = 0; i < Meshes.Count; i++)
                 {
@@ -421,7 +422,7 @@ namespace CP77.CR2W
             return true;
         }
 
-        public static Vec3[] GetMeshBonesPosn(CR2WFile cr2w)
+        public static Vec3[] GetMeshBonesPosn(CR2WFile cr2w, bool LeftHanded = false)
         {
             rendRenderMeshBlob rendmeshblob = cr2w.Chunks.Select(_ => _.Data).OfType<rendRenderMeshBlob>().First();
 
@@ -433,7 +434,7 @@ namespace CP77.CR2W
                 x = rendmeshblob.Header.BonePositions[i].X.Value;
                 y = rendmeshblob.Header.BonePositions[i].Y.Value;
                 z = rendmeshblob.Header.BonePositions[i].Z.Value;
-                posn[i] = new Vec3(x, z, -y);
+                posn[i] = LeftHanded ? new Vec3(x, y, z) : new Vec3(x, z, -y);
             }
             return posn;
         }
@@ -586,7 +587,7 @@ namespace CP77.CR2W
             return meshesInfo;
         }
 
-        public static List<RawMeshContainer> ContainRawMesh(MemoryStream gfs, MeshesInfo info, bool LODFilter,string meshFile = "")
+        public static List<RawMeshContainer> ContainRawMesh(MemoryStream gfs, MeshesInfo info, bool LODFilter,string meshFile = "",bool LeftHanded = false)
         {
             BinaryReader gbr = new BinaryReader(gfs);
 
@@ -616,7 +617,7 @@ namespace CP77.CR2W
                     float y = (gbr.ReadInt16() / 32767f) * info.qScale.Y + info.qTrans.Y;
                     float z = (gbr.ReadInt16() / 32767f) * info.qScale.Z + info.qTrans.Z;
                     // changing orientation of geomerty, Y+ Z+ RHS-LHS BS
-                    vertices[i] = new Vec3(x, z, -y);
+                    vertices[i] = LeftHanded ? new Vec3(x,y,z) : new Vec3(x, z, -y);
                 }
                 // got vertices
 
@@ -653,7 +654,7 @@ namespace CP77.CR2W
                         NorRead32 = gbr.ReadUInt32();
                         Vec4 tempv = Converters.TenBitShifted(NorRead32);
                         // changing orientation of geomerty, Y+ Z+ RHS-LHS BS
-                        normals[i] = new Vec3(tempv.X, tempv.Z, -tempv.Y);
+                        normals[i] = LeftHanded ? new Vec3(tempv.X,tempv.Y, tempv.Z) : new Vec3(tempv.X, tempv.Z, -tempv.Y);
 
                         if (NorRead32 != 0x5FF7FDFF)
                         {
@@ -673,7 +674,8 @@ namespace CP77.CR2W
                         NorRead32 = gbr.ReadUInt32();
                         Vec4 tempv = Converters.TenBitShifted(NorRead32);
                         // changing orientation of geomerty, Y+ Z+ RHS-LHS BS
-                        tangents[i] = new Vec4(tempv.X, tempv.Z, -tempv.Y, 1f);
+                        tangents[i] = LeftHanded ? new Vec4(tempv.X, tempv.Y, tempv.Z, 1f) : new Vec4(tempv.X, tempv.Z, -tempv.Y, 1f);
+
                     }
                 }
 
@@ -712,7 +714,7 @@ namespace CP77.CR2W
                     {
                         gfs.Position = info.colorOffsets[index] + i * str;
                         Vec4 tempv = new Vec4(gbr.ReadByte() / 255f, gbr.ReadByte() / 255f, gbr.ReadByte() / 255f, gbr.ReadByte() / 255f);
-                        colors[i] = new Vec4(tempv.X, tempv.Y, tempv.Z, tempv.W);
+                        colors[i] = LeftHanded ? new Vec4(tempv.X, tempv.Y, tempv.Z, tempv.W) : new Vec4(tempv.X, tempv.Y, tempv.Z, tempv.W);
                     }
                     // got vert colors
                 }
@@ -754,7 +756,7 @@ namespace CP77.CR2W
                         float x = Converters.hfconvert(gbr.ReadUInt16());
                         float y = Converters.hfconvert(gbr.ReadUInt16());
                         float z = Converters.hfconvert(gbr.ReadUInt16());
-                        extradata[i] = new Vec3(x, z, -y);
+                        extradata[i] = LeftHanded ? new Vec3(x,y,z) : new Vec3(x, z, -y);
                     }
                 }
                 // getting uint16 faces/indices

@@ -22,7 +22,7 @@ namespace WolvenKit.Modkit.RED4.RigFile
             _modTools = modTools;
         }
 
-        public RawArmature ProcessRig(Stream fs)
+        public RawArmature ProcessRig(Stream fs,bool LeftHanded = false)
         {
             BinaryReader br = new BinaryReader(fs);
 
@@ -48,7 +48,7 @@ namespace WolvenKit.Modkit.RED4.RigFile
             {
                 fs.Position = offset + i * 48;
                 Vec3 v = new Vec3(br.ReadSingle(), br.ReadSingle(), br.ReadSingle());
-                Rig.LocalPosn[i] = new Vec3(v.X, v.Z, -v.Y);
+                Rig.LocalPosn[i] = LeftHanded ? new Vec3(v.X, v.Y, v.Z) : new Vec3(v.X, v.Z, -v.Y);
             }
 
             Rig.LocalRot = new Quat[Rig.BoneCount];
@@ -57,7 +57,7 @@ namespace WolvenKit.Modkit.RED4.RigFile
             {
                 fs.Position = offset + i * 48 + 16;
                 Quat q = new Quat(br.ReadSingle(), br.ReadSingle(), br.ReadSingle(), br.ReadSingle());
-                Rig.LocalRot[i] = new Quat(q.X, q.Z, -q.Y, q.W);
+                Rig.LocalRot[i] = LeftHanded ? new Quat(q.X, q.Y, q.Z, q.W) : new Quat(q.X, q.Z, -q.Y, q.W);
             }
 
             Rig.LocalScale = new Vec3[Rig.BoneCount];
@@ -110,13 +110,13 @@ namespace WolvenKit.Modkit.RED4.RigFile
                     float x = (cr2w.Chunks[0].Data as animRig).APoseMS[i].Translation.X.Value;
                     float y = (cr2w.Chunks[0].Data as animRig).APoseMS[i].Translation.Y.Value;
                     float z = (cr2w.Chunks[0].Data as animRig).APoseMS[i].Translation.Z.Value;
-                    Rig.AposeMSTrans[i] = new Vec3(x, z, -y);
+                    Rig.AposeMSTrans[i] = LeftHanded ? new Vec3(x, y, z)  : new Vec3(x, z, -y);
                     Mat Tra = Mat.CreateTranslation(Rig.AposeMSTrans[i]);
                     float I = (cr2w.Chunks[0].Data as animRig).APoseMS[i].Rotation.I.Value;
                     float J = (cr2w.Chunks[0].Data as animRig).APoseMS[i].Rotation.J.Value;
                     float K = (cr2w.Chunks[0].Data as animRig).APoseMS[i].Rotation.K.Value;
                     float R = (cr2w.Chunks[0].Data as animRig).APoseMS[i].Rotation.R.Value;
-                    Rig.AposeMSRot[i] = new Quat(I, K, -J, R);
+                    Rig.AposeMSRot[i] = LeftHanded ? new Quat(I, J, K, R) : new Quat(I, K, -J, R);
                     Mat Rot = Mat.CreateFromQuaternion(Rig.AposeMSRot[i]);
                     float t = (cr2w.Chunks[0].Data as animRig).APoseMS[i].Scale.X.Value;
                     float u = (cr2w.Chunks[0].Data as animRig).APoseMS[i].Scale.Y.Value;
@@ -146,13 +146,13 @@ namespace WolvenKit.Modkit.RED4.RigFile
                     float x = (cr2w.Chunks[0].Data as animRig).APoseLS[i].Translation.X.Value;
                     float y = (cr2w.Chunks[0].Data as animRig).APoseLS[i].Translation.Y.Value;
                     float z = (cr2w.Chunks[0].Data as animRig).APoseLS[i].Translation.Z.Value;
-                    Rig.AposeLSTrans[i] = new Vec3(x, z, -y);
+                    Rig.AposeLSTrans[i] = LeftHanded ? new Vec3(x, y, z) : new Vec3(x, z, -y);
                     Mat Tra = Mat.CreateTranslation(Rig.AposeLSTrans[i]);
                     float I = (cr2w.Chunks[0].Data as animRig).APoseLS[i].Rotation.I.Value;
                     float J = (cr2w.Chunks[0].Data as animRig).APoseLS[i].Rotation.J.Value;
                     float K = (cr2w.Chunks[0].Data as animRig).APoseLS[i].Rotation.K.Value;
                     float R = (cr2w.Chunks[0].Data as animRig).APoseLS[i].Rotation.R.Value;
-                    Rig.AposeLSRot[i] = new Quat(I, K, -J, R);
+                    Rig.AposeLSRot[i] = LeftHanded ? new Quat(I, J, K, R) : new Quat(I, K, -J, R);
                     Mat Rot = Mat.CreateFromQuaternion(Rig.AposeLSRot[i]);
                     float t = (cr2w.Chunks[0].Data as animRig).APoseLS[i].Scale.X.Value;
                     float u = (cr2w.Chunks[0].Data as animRig).APoseLS[i].Scale.Y.Value;

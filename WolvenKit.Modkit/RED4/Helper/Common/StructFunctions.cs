@@ -212,23 +212,6 @@ namespace WolvenKit.Modkit.RED4.GeneralStructs
         /// <summary>
         /// Packed 48 Bit Quaternion
         /// </summary>
-        public static Quaternion readQuat48(this BinaryReader br)
-        {
-            ushort X = br.ReadUInt16();
-            ushort Y = br.ReadUInt16();
-            ushort Z = br.ReadUInt16();
-
-            float FX = ((int)X - 32767) / 32767.0f;
-            float FY = ((int)Y - 32767) / 32767.0f;
-            float FZ = ((int)Z - 32767) / 32767.0f;
-            float WSquared = 1.0f - FX * FX - FY * FY - FZ * FZ;
-            float W = WSquared > 0.0f ? (float)Math.Sqrt(WSquared) : 0.0f;
-
-            return new Quaternion(FX, FY, FZ, W);
-        }
-        /// <summary>
-        /// Packed 48 Bit Quaternion
-        /// </summary>
         public static Quaternion readQuat48(this BinaryReader br, bool SignedW = false)
         {
             ushort X = br.ReadUInt16();
@@ -247,18 +230,6 @@ namespace WolvenKit.Modkit.RED4.GeneralStructs
             float W = 1.0f - d;
             W = (SignedW) ? -W : W;
             return new Quaternion(FX, FY, FZ, W);
-        }
-        /// <summary>
-        /// XYZ stripped W
-        /// </summary>
-        public static Quaternion readQuatXYZ(this BinaryReader br)
-        {
-            float X = br.ReadSingle();
-            float Y = br.ReadSingle();
-            float Z = br.ReadSingle();
-            float WSquared = 1.0f - X * X - Y * Y - Z * Z;
-            float W = WSquared > 0.0f ? (float)Math.Sqrt(WSquared) : 0.0f;
-            return new Quaternion(X, Y, Z, W);
         }
         /// <summary>
         /// XYZ stripped W
@@ -296,6 +267,14 @@ namespace WolvenKit.Modkit.RED4.GeneralStructs
         {
             var dtime2 = (int)(br.ReadUInt16());
             return ((float)dtime2 / 0xFFFF) * duration;
+        }
+        public static Quaternion toQuat(this WolvenKit.RED4.CR2W.Types.Quaternion q)
+        {
+            return new Quaternion(q.I.Value, q.J.Value, q.K.Value, q.R.Value);
+        }
+        public static Vector3 toVector3(this WolvenKit.RED4.CR2W.Types.Vector3 v)
+        {
+            return new Vector3(v.X.Value, v.Y.Value, v.Z.Value);
         }
     }
  }

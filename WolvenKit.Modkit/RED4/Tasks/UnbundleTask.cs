@@ -19,6 +19,10 @@ namespace CP77Tools.Tasks
             p = @"base\vehicles\appearances\sport\rayfield_caliburn__basic.app";
             p = @"base\characters\appearances\main_npc\woodman.app";
             p = @"base\vehicles\appearances\sport\rayfield_caliburn__basic.app";
+            p = @"base\characters\appearances\main_npc\panam.app";
+            p = @"base\vehicles\appearances\sport\quadra_type66_nomad.app";
+            p = @"base\characters\appearances\main_npc\victor_vektor.app";
+            p = @"base\vehicles\appearances\special\rayfield_excalibur__basic.app";
             _memTools.readApp(path[0], p);
 
             

@@ -436,6 +436,14 @@ namespace WolvenKit.Common.Model.Arguments
         public string MaterialRepo { get; set; }
 
         /// <summary>
+        ///LHS for compatibility with Anims (Im BNlender)
+        /// </summary>
+        [Category("Default Export Settings")]
+        [Display(Name = "Anim Mode")]
+        [Description("If checked the mesh & bones will be Left-Handed Co-ordinate based for use with Animations")]
+        public bool AnimsMode { get; set; } = true;
+
+        /// <summary>
         /// String Override to display info in datagrid.
         /// </summary>
         /// <returns>String</returns>

@@ -433,6 +433,7 @@ namespace WolvenKit.Modkit.RED4
 
         private bool HandleMesh(Stream cr2wStream, FileInfo cr2wFileName, MeshExportArgs meshargs)
         {
+            
             var archives = new List<Archive>();
             foreach (var ar in meshargs.Archives)
             {

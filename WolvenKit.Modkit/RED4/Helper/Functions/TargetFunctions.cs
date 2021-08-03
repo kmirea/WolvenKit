@@ -33,7 +33,7 @@ namespace CP77.CR2W
             _modTools = modTools;
         }
 
-        public bool ExportTargets(Stream targetStream, FileInfo outfile, bool isGLBinary = true)
+        public bool ExportTargets(Stream targetStream, FileInfo outfile, bool isGLBinary = true, bool LeftHanded = false)
         {
             var cr2w = _modTools.TryReadRED4File(targetStream);
             if (cr2w == null || !cr2w.Chunks.Select(_ => _.Data).OfType<MorphTargetMesh>().Any() || !cr2w.Chunks.Select(_ => _.Data).OfType<rendRenderMeshBlob>().Any())
@@ -64,7 +64,7 @@ namespace CP77.CR2W
 
             MeshesInfo meshinfo = MeshTools.GetMeshesinfo(cr2w);
 
-            List<RawMeshContainer> expMeshes = MeshTools.ContainRawMesh(meshbuffer, meshinfo, true);
+            List<RawMeshContainer> expMeshes = MeshTools.ContainRawMesh(meshbuffer, meshinfo, true,"",LeftHanded);
 
             int subMeshC = expMeshes.Count;
 

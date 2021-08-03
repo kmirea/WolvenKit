@@ -7,6 +7,7 @@ using WolvenKit.Common;
 using WolvenKit.Common.Model.Arguments;
 using WolvenKit.Common.Services;
 using WolvenKit.Modkit.RED4.GeneralStructs;
+using WolvenKit.RED4.CR2W.Reflection;
 using WolvenKit.RED4.CR2W.Types;
 using WolvenKit.RED4.CR2W;
 using CP77.CR2W;
@@ -41,11 +42,9 @@ namespace WolvenKit.Modkit.RED4
         private readonly Red4ParserService _fileService;
         private readonly ILoggerService _loggerService;
         private readonly IHashService _hashService;
-        private Dictionary<ulong, int> _archiveHashes = new();
         private ArchiveManager archiveMgr;
-        //private Dictionary<ulong, int> _archiveHashes = new();
-        private List<FileInfo> _archiveList = new List<FileInfo>();
-
+        public static int breakpoint = 0;
+        public static MemTools _memTools { get; set; }
         public MemTools(ModTools modTools,Red4ParserService fileService, ILoggerService loggerService, IHashService hashService)
         {
             _modTools = modTools;
@@ -54,6 +53,11 @@ namespace WolvenKit.Modkit.RED4
             _hashService = hashService;
             archiveMgr = new ArchiveManager(_hashService);
         }
+        /// <summary>
+        /// Find Files by Pattern
+        /// </summary>
+        /// <param name="pattern"></param>
+        /// <returns>Hash List</returns>
         public List<ulong> FindResource(string pattern)
         {
             var matches = archiveMgr.FileList.Cast<FileEntry>().MatchesWildcard(f => f.FileName, pattern).ToList();
@@ -61,7 +65,6 @@ namespace WolvenKit.Modkit.RED4
         }
         public bool LoadArchives(string path)
         {
-            _archiveList = new List<FileInfo>();
             #region checks
             if (string.IsNullOrEmpty(path))
             {
@@ -90,37 +93,14 @@ namespace WolvenKit.Modkit.RED4
             }
             var isDirectory = !inputFileInfo.Exists;
             var basedir = inputFileInfo.Exists ? new FileInfo(path).Directory : inputDirInfo;
-
             #endregion
             archiveMgr = new ArchiveManager(_hashService);
             archiveMgr.LoadFromFolder(basedir);
-            /*if (isDirectory)
-            {
-                var archiveManager = new ArchiveManager(_hashService);
-                archiveManager.LoadFromFolder(basedir);
-                _archiveList = archiveManager.Archives.Select(_ => new FileInfo(_.Value.ArchiveAbsolutePath)).ToList();
-                //archiveManager.Items.FileList.Where(_ => _.Key == 1234).FirstOrDefault()
-            }
-            else
-            {
-                _archiveList = new List<FileInfo> { inputFileInfo };
-            }
-            for (int i = 0; i < _archiveList.Count; i++)
-            {
-                var ar = Red4ParserServiceExtensions.ReadArchive(_archiveList[i].FullName, _hashService);
-                var hsh = ar.Files.Values.Cast<FileEntry>().Select(_ => _.NameHash64).ToList();
-                foreach (var h in hsh)
-                {
-                    if (!_archiveHashes.ContainsKey(h))
-                    {
-                        _archiveHashes[h] = i;
-                    }
-                }
-            }*/
+            MemTools._memTools = this;
             return true;
         }
         /// <summary>
-        /// Load CR2W + Buffers from fixed depot path
+        /// Load CR2W + Buffers from fixed depot path or search pattern
         /// </summary>
         /// <param name="pattern"></param>
         /// <param name="getBuffers"></param>
@@ -130,7 +110,10 @@ namespace WolvenKit.Modkit.RED4
             var fhash = FNV1A64HashAlgorithm.HashString(pattern);
             if (!archiveMgr.Items.ContainsKey(fhash) || pattern.Contains("*"))
             {
-                fhash = FindResource(pattern)[0];
+                var results = FindResource(pattern);
+                if (results == null || results.Count < 1)
+                    return null;
+                fhash = results[0];
             }
             return LoadResource(fhash, getBuffers);
         }
@@ -148,8 +131,6 @@ namespace WolvenKit.Modkit.RED4
                 return cw;
             }
             var fileEntry = archiveMgr.Items[fhash][0] as FileEntry;
-            
-            
             var cr2WStream = new MemoryStream();
             ModTools.ExtractSingleToStream(fileEntry.Archive as Archive, fhash, cr2WStream);
             var cr2w = _fileService.TryReadRED4File(cr2WStream);
@@ -172,185 +153,11 @@ namespace WolvenKit.Modkit.RED4
             }
             return cw;
         }
-        public Dictionary<int, List<ulong>> FindFiles(string path, string pattern, List<FileInfo> archiveFileInfos)
-        {
-            Dictionary<ulong, string> _userHashes = new();
-
-            //_wolvenkitFileService.TryReadCr2WFile
-            Dictionary<int, List<ulong>> fileList = new Dictionary<int, List<ulong>>();
-            int found = 0;
-            if (archiveFileInfos == null || archiveFileInfos.Count < 1)
-            {
-                return fileList;
-            }
-            foreach (var arch in archiveFileInfos)
-            {
-                var arIdx = archiveFileInfos.IndexOf(arch);
-                // read archive
-                var ar = Red4ParserServiceExtensions.ReadArchive(arch.FullName, _hashService);
-                // check search pattern
-                var finalmatches = ar.Files.Values.Cast<FileEntry>();
-                finalmatches = ar.Files.Values.Cast<FileEntry>().MatchesWildcard(item => item.FileName, pattern);
-                var finalMatchesList = finalmatches.ToList();
-                found += finalMatchesList.Count;
-                if (finalMatchesList.Count > 0)
-                {
-                    fileList[arIdx] = new List<ulong>();
-                }
-                foreach (var m in finalMatchesList)
-                {
-                    fileList[arIdx].Add(m.NameHash64);
-                }
-            }
-            return fileList;
-        }
-        public CR2W_Wrapper LoadSingleFile(string path, string pattern,bool getBuffers = true, ulong hash = 0)
-        {
-            
-            CR2W_Wrapper cw = new CR2W_Wrapper();
-            if (String.IsNullOrEmpty(path) || String.IsNullOrEmpty(pattern))
-                return null;
-            List<FileInfo> archiveFileInfos = Get_archives(path);
-            var foundList = FindFiles(path, pattern, archiveFileInfos);
-            if (foundList.Count < 1)
-                return null;
-
-            var arIdx = foundList.First().Key;
-            hash = foundList[arIdx][0];
-            // read archive
-            var ar = Red4ParserServiceExtensions.ReadArchive(archiveFileInfos[arIdx].FullName, _hashService);
-            if (!ar.Files.ContainsKey(hash))
-            {
-                return null;
-            }
-
-            var cr2WStream = new MemoryStream();
-            ModTools.ExtractSingleToStream(ar, hash, cr2WStream);
-            var cr2w = _fileService.TryReadRED4File(cr2WStream);
-            if (cr2w == null)
-            {
-                return null;
-            }
-            cw = new CR2W_Wrapper()
-            {
-                archive_path = archiveFileInfos[arIdx].Name,
-                buffers = new List<byte[]>(),
-                depot_path = path,
-                cr2w = cr2w,
-                cr2wstream = cr2WStream
-            };
-
-            if (ar.Files[hash] is FileEntry entry)
-            {
-                cw = new CR2W_Wrapper() {
-                    archive_path = archiveFileInfos[arIdx].Name,
-                    buffers = new List<byte[]>(),
-                    cr2w = cr2w,
-                    cr2wstream = cr2WStream,
-                    depot_path = entry.Name
-                };
-
-                var hasBuffers = (entry.SegmentsEnd - entry.SegmentsStart) > 1;
-                if (hasBuffers && getBuffers)
-                {
-                    cw.buffers = GenerateMemBuffers(cr2WStream);
-                }
-            }
-            return cw;
-           
-
-            /*var inputFileInfo = new FileInfo(path);
-            var inputDirInfo = new DirectoryInfo(path);
-            var basedir = inputFileInfo.Exists ? new FileInfo(path).Directory : inputDirInfo;
-            DirectoryInfo outDir = new DirectoryInfo(outpath);
-            var extractedList = new ConcurrentBag<string>();
-            var failedList = new ConcurrentBag<string>();
-            //_loggerService.Info($"Found {finalMatchesList.Count} bundle entries to extract.");   
-            // var progress = 0;
-            foreach (var processedarchive in archiveFileInfos)
-            {
-
-                if (string.IsNullOrEmpty(outpath))
-                {
-                    outDir = Directory.CreateDirectory(Path.Combine(
-                        basedir.FullName,
-                        processedarchive.Name.Replace(".archive", "")));
-                }
-                else
-                {
-                    outDir = new DirectoryInfo(outpath);
-                    if (!outDir.Exists)
-                    {
-                        outDir = Directory.CreateDirectory(outpath);
-                    }
-                    if (inputDirInfo.Exists)
-                    {
-                        outDir = Directory.CreateDirectory(Path.Combine(
-                            outDir.FullName,
-                            processedarchive.Name.Replace(".archive", "")));
-                    }
-                }
-            }
-           
-            int found = 0;
-            foreach (var arIdx in foundList.Keys)
-            {
-                found += foundList[arIdx].Count;
-            }
-            foreach (var arIdx in foundList.Keys)
-            {
-                if (foundList[arIdx].Count > 0)
-                {
-                    // read archive
-                    var ar = Red4ParserServiceExtensions.ReadArchive(archiveFileInfos[arIdx].FullName, _hashService);
-                    using var fs = new FileStream(ar.ArchiveAbsolutePath, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
-                    using var mmf = MemoryMappedFile.CreateFromFile(fs, null, 0, MemoryMappedFileAccess.ReadWrite, HandleInheritability.None, false);
-                    foreach (var fhash in foundList[arIdx])
-                    {
-                       
-                        // get filename
-                        var entry = ar.Files[fhash] as FileEntry;
-                        var name = entry.FileName;
-                        var entryName = ar.Files[fhash].Name;
-                        if (string.IsNullOrEmpty(outpath))
-                        {
-                            outDir = Directory.CreateDirectory(Path.Combine(basedir.FullName, ar.Name.Replace(".archive", "")));
-                        }
-                        else
-                        {
-                            outDir = new DirectoryInfo(outpath);
-                            if (!outDir.Exists)
-                            {
-                                outDir = Directory.CreateDirectory(outpath);
-                            }
-                            if (inputDirInfo.Exists)
-                            {
-                                outDir = Directory.CreateDirectory(Path.Combine(outDir.FullName, ar.Name.Replace(".archive", "")));
-                            }
-                        }
-                        //output anims to json
-                        var outfile = new FileInfo(Path.Combine(outDir.FullName, $"{name}" + ".json"));
-                       
-                        // extract file to memorystream
-                        var ms = new MemoryStream();
-
-                        ar.CopyFileToStream(ms, fhash, false, mmf);
-
-                        var cr2w = _modTools.TryReadCr2WFile(ms);
-                        if (cr2w == null)
-                        {
-                            failedList.Add(entryName);
-                        }
-                        else
-                        {
-                            extractedList.Add(entryName);
-                            var buffers = GenerateMemBuffers(ms);
-                            ///HANDLE CR2W & BUFFERS HERE
-                        }
-                    }
-                }
-            }*/
-        }
+        /// <summary>
+        /// Unpack CR2W Buffers
+        /// </summary>
+        /// <param name="cr2wStream"></param>
+        /// <returns></returns>
         public List<byte[]> GenerateMemBuffers(Stream cr2wStream)
         {
             uint KARK = 1263681867;
@@ -396,96 +203,6 @@ namespace WolvenKit.Modkit.RED4
                 bufferList.Add(bufferData);
             }
             return bufferList;
-        }
-        /// <summary>
-        /// Get Archives List
-        /// </summary>
-        /// <param name="path"></param>
-        /// <returns></returns>
-        public List<FileInfo> Get_archives(string path)
-        {
-            List<FileInfo> archiveFileInfos = new List<FileInfo>();
-
-            if (string.IsNullOrEmpty(path))
-            {
-                _loggerService.Warning("Please fill in an input path.");
-                return archiveFileInfos;
-            }
-
-            var inputFileInfo = new FileInfo(path);
-            var inputDirInfo = new DirectoryInfo(path);
-
-            if (!inputFileInfo.Exists && !inputDirInfo.Exists)
-            {
-                _loggerService.Warning("Input path does not exist.");
-                return archiveFileInfos;
-            }
-
-            if (inputFileInfo.Exists && inputFileInfo.Extension != ".archive")
-            {
-                _loggerService.Warning("Input file is not an .archive.");
-                return archiveFileInfos;
-            }
-            else if (inputDirInfo.Exists && inputDirInfo.GetFiles().All(_ => _.Extension != ".archive"))
-            {
-                _loggerService.Warning("No .archive file to process in the input directory");
-                return archiveFileInfos;
-            }
-
-            var isDirectory = !inputFileInfo.Exists;
-            var basedir = inputFileInfo.Exists ? new FileInfo(path).Directory : inputDirInfo;
-
-            if (isDirectory)
-            {
-                var archiveManager = new ArchiveManager(_hashService);
-                archiveManager.LoadFromFolder(basedir);
-                archiveFileInfos = archiveManager.Archives.Select(_ => new FileInfo(_.Value.ArchiveAbsolutePath)).ToList();
-            }
-            else
-            {
-                archiveFileInfos = new List<FileInfo> { inputFileInfo };
-            }
-            return archiveFileInfos;
-
-        }
-        /// <summary>
-        /// Get File Hashes for given search pattern
-        /// </summary>
-        /// <param name="path"></param>
-        /// <param name="pattern"></param>
-        /// <returns></returns>
-        public Dictionary<int,List<ulong>> FindFiles5(string path, string pattern, List<FileInfo> archiveFileInfos)
-        {
-            Dictionary<ulong, string> _userHashes = new();
-
-            //_wolvenkitFileService.TryReadCr2WFile
-            Dictionary<int, List<ulong>> fileList = new Dictionary<int, List<ulong>>();
-            int found = 0;
-            if (archiveFileInfos == null ||  archiveFileInfos.Count < 1)
-            {
-                return fileList;
-            }
-            foreach (var arch in archiveFileInfos)
-            {
-                var arIdx = archiveFileInfos.IndexOf(arch);
-                // read archive
-                var ar = Red4ParserServiceExtensions.ReadArchive(arch.FullName, _hashService);
-                // check search pattern
-                var finalmatches = ar.Files.Values.Cast<FileEntry>();
-                finalmatches = ar.Files.Values.Cast<FileEntry>().MatchesWildcard(item => item.FileName, pattern);
-                var finalMatchesList = finalmatches.ToList();
-                found += finalMatchesList.Count;
-                if(finalMatchesList.Count > 0)
-                {
-                    fileList[arIdx] = new List<ulong>();
-                }
-                foreach (var m in finalMatchesList)
-                {
-                    fileList[arIdx].Add(m.NameHash64);
-                }
-            }
-            return fileList;
-
         }
         public void readApp(string path, string pattern)
         {
@@ -624,6 +341,7 @@ namespace WolvenKit.Modkit.RED4
                                 var vname = entFile.Name.Split("__")[0];
                                 var vrigFile = Path.Combine(vehicleType[baseType].Split("__")[0], "rig", entFile.Name.Replace(".ent", ".rig"));
                                 vrigFile = @"base\vehicles\sport\v_sport1_rayfield_caliburn\rig\v_sport1_rayfield_caliburn_01__basic_01.rig";
+                                vrigFile = @"base\vehicles\sport\v_sport2_quadra_type66_nomad\rig\v_sport2_quadra_type66_nomad_01__basic_01.rig";
                                 var vrig = LoadResource(vrigFile, false);
                                 
                                 if (vrig.cr2w != null)
@@ -668,11 +386,19 @@ namespace WolvenKit.Modkit.RED4
                                                 var mfn = new FileInfo(mshpath).Name;
                                                 if(mfn.StartsWith("h0_"))
                                                 {
+                                                    var didx = mshpath.LastIndexOf("\\");
+                                                    var altPath = mshpath.Substring(0, didx) + @"\*";
+
                                                     var headRigPath = mshpath.Substring(0, mshpath.Length-5) + "_skeleton.rig";
                                                     var facialSetupPath = mshpath.Substring(0, mshpath.Length - 5) + "_rigsetup.facialsetup";
                                                     var headRig = LoadResource( headRigPath, false);
                                                     if (headRig == null)
-                                                        continue;
+                                                    {
+                                                        headRigPath = altPath + "_skeleton.rig";
+                                                        headRig = LoadResource(headRigPath, false);
+                                                        if (headRig == null)
+                                                            continue;
+                                                    }
                                                     if (headRig.cr2w != null)
                                                     {
                                                         rigStreams.Add(headRig);
@@ -718,17 +444,22 @@ namespace WolvenKit.Modkit.RED4
                     }
                 }
             }
-            if(meshStreams.Count > 0)
+            /*var f1 = @"base\surfaces\microblends\edgewear_01.xbm";
+            var f2 = @"base\surfaces\microblends\scratches_and_flakes_a.xbm";
+            var mm1 = LoadResource(f1, false);
+            var mm2 = LoadResource(f2, false);*/
+
+            if (meshStreams.Count > 0)
             {
                 var mstrm = meshStreams.Select(_ => _.cr2wstream).ToList();
                 var rgstrm = rigStreams.Select(_ => _.cr2wstream).ToList();
-                string outP = @"C:\dev\cyberpunk\out\test\caliburn";
+                string outP = @"C:\dev\cyberpunk\out\test\excalibur";
                 
                 try
                 {
                     archives = archiveMgr.Archives.Select(_ => _.Value as Archive).ToList();
 
-                    _modTools.ExportMultiMeshWithRigMats(mstrm, rgstrm, new FileInfo(outP), archives, matRepot, meshFiles, EUncookExtension.tga, true, true);
+                    _modTools.ExportMultiMeshWithRigMats(mstrm, rgstrm, new FileInfo(outP), archives, matRepot, meshFiles, EUncookExtension.tga, true, true,false);
                 }
                 catch (Exception e)
                 {

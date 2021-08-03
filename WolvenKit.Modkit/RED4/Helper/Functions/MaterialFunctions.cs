@@ -29,14 +29,14 @@ namespace WolvenKit.Modkit.RED4
     /// </summary>
     public partial class ModTools
     {
-        public bool ExportMultiMeshWithRigMats(List<Stream> meshStreamS, List<Stream> rigStreamS, FileInfo outfile, List<Archive> archives, string matRepo, List<string> meshFiles, EUncookExtension eUncookExtension = EUncookExtension.dds, bool isGLBinary = true, bool LodFilter = true)
+        public bool ExportMultiMeshWithRigMats(List<Stream> meshStreamS, List<Stream> rigStreamS, FileInfo outfile, List<Archive> archives, string matRepo, List<string> meshFiles, EUncookExtension eUncookExtension = EUncookExtension.dds, bool isGLBinary = true, bool LodFilter = true, bool LeftHanded = false)
         {
             var _rig = new RIG(_wolvenkitFileService);
             List<RawArmature> Rigs = new List<RawArmature>();
             rigStreamS = rigStreamS.OrderByDescending(r => r.Length).ToList();  // not so smart hacky method to get bodybase rigs on top/ orderby descending
             for (int r = 0; r < rigStreamS.Count; r++)
             {
-                RawArmature Rig = _rig.ProcessRig(rigStreamS[r]);
+                RawArmature Rig = _rig.ProcessRig(rigStreamS[r],false);
                 Rigs.Add(Rig);
             }
             RawArmature expRig = RIG.CombineRigs(Rigs);
@@ -71,11 +71,11 @@ namespace WolvenKit.Modkit.RED4
                 if (cmesh.BoneNames.Count != 0)    // for rigid meshes
                 {
                     bones.Names = RIG.GetboneNames(cr2w, "CMesh");
-                    bones.WorldPosn = MeshTools.GetMeshBonesPosn(cr2w);
+                    bones.WorldPosn = MeshTools.GetMeshBonesPosn(cr2w,false);
                 }
                 //RawArmature Rig = MeshTools.GetNonParentedRig(bones);
 
-                List<RawMeshContainer> Meshes = MeshTools.ContainRawMesh(ms, meshinfo, LodFilter,meshFiles[m]);
+                List<RawMeshContainer> Meshes = MeshTools.ContainRawMesh(ms, meshinfo, LodFilter,meshFiles[m],false);
 
                 for (int i = 0; i < Meshes.Count; i++)
                 {
@@ -125,7 +125,7 @@ namespace WolvenKit.Modkit.RED4
             }
             return true;
         }
-        public bool ExportMeshWithMaterials(Stream meshStream, FileInfo outfile, List<Archive> archives,string matRepo, EUncookExtension eUncookExtension = EUncookExtension.dds, bool isGLBinary = true, bool LodFilter = true)
+        public bool ExportMeshWithMaterials(Stream meshStream, FileInfo outfile, List<Archive> archives,string matRepo, EUncookExtension eUncookExtension = EUncookExtension.dds, bool isGLBinary = true, bool LodFilter = true, bool LeftHanded = false)
         {
             if (matRepo == null)
                 throw new Exception("Material Repository Path is not set, Please select a folder in the Material Repository Settings where your textures will output, Generating the complete dump is not required.");
@@ -144,14 +144,14 @@ namespace WolvenKit.Modkit.RED4
             if (meshBones.boneCount != 0)    // for rigid meshes
             {
                 meshBones.Names = RIG.GetboneNames(cr2w, "CMesh");
-                meshBones.WorldPosn = MeshTools.GetMeshBonesPosn(cr2w);
+                meshBones.WorldPosn = MeshTools.GetMeshBonesPosn(cr2w,LeftHanded);
             }
             RawArmature Rig = MeshTools.GetNonParentedRig(meshBones);
 
             MemoryStream ms = MeshTools.GetMeshBufferStream(meshStream, cr2w);
             MeshesInfo meshinfo = MeshTools.GetMeshesinfo(cr2w);
 
-            List<RawMeshContainer> expMeshes = MeshTools.ContainRawMesh(ms, meshinfo, LodFilter);
+            List<RawMeshContainer> expMeshes = MeshTools.ContainRawMesh(ms, meshinfo, LodFilter,"",LeftHanded);
             if (meshBones.boneCount == 0)    // for rigid meshes
             {
                 for (int i = 0; i < expMeshes.Count; i++)
